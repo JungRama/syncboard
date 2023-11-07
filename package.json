@@ -13,5 +13,8 @@
     "turbo": "latest"
   },
   "packageManager": "pnpm@8.6.10",
-  "name": "collaborative-whiteboard"
+  "name": "collaborative-whiteboard",
+  "dependencies": {
+    "cz-conventional-changelog": "^3.3.0"
+  }
 }
