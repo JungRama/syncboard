@@ -17,12 +17,11 @@ export const signJwt = (
   const keySecret = process.env[Key] ?? "SECRET";
 
   // Convert the secret key from base64 to ASCII
-  const privateKey = Buffer.from(keySecret, "base64").toString("ascii");
+  const privateKey = Buffer.from(keySecret, "base64");
 
   // Sign the JWT using the payload, private key, and options
   return jwt.sign(payload, privateKey, {
     ...(options && options),
-    algorithm: "RS256",
   });
 };
 

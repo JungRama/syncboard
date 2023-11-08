@@ -262,10 +262,8 @@ var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var signJwt = (payload, Key, options) => {
   var _a;
   const keySecret = (_a = process.env[Key]) != null ? _a : "SECRET";
-  const privateKey = Buffer.from(keySecret, "base64").toString("ascii");
-  return import_jsonwebtoken.default.sign(payload, privateKey, __spreadProps(__spreadValues({}, options && options), {
-    algorithm: "RS256"
-  }));
+  const privateKey = Buffer.from(keySecret, "base64");
+  return import_jsonwebtoken.default.sign(payload, privateKey, __spreadValues({}, options && options));
 };
 
 // src/controllers/auth.controller.ts
@@ -398,38 +396,11 @@ var mongoose_default = connectDB;
 var import_express = __toESM(require("express"));
 var import_dotenv2 = __toESM(require("dotenv"));
 var import_cookie_parser = __toESM(require("cookie-parser"));
-var import_helmet = __toESM(require("helmet"));
-var import_morgan = __toESM(require("morgan"));
-
-// src/core/winston.ts
-var import_winston = __toESM(require("winston"));
-var logger = import_winston.default.createLogger({
-  format: import_winston.default.format.simple(),
-  transports: [
-    new import_winston.default.transports.File({
-      level: "info",
-      filename: "app.log",
-      handleExceptions: true,
-      maxsize: 5242880,
-      maxFiles: 5
-    }),
-    new import_winston.default.transports.Console({
-      level: "debug",
-      handleExceptions: true
-    })
-  ],
-  exitOnError: false
-});
-var winston_default = logger;
-
-// src/app.ts
 var app = (0, import_express.default)();
 import_dotenv2.default.config();
 app.use(import_express.default.json());
 app.use(import_express.default.urlencoded({ extended: true }));
-app.use((0, import_helmet.default)());
 app.use((0, import_cookie_parser.default)());
-app.use((0, import_morgan.default)("combined", { stream: winston_default }));
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION \u{1F525} Shutting down...");
   console.error("Error\u{1F525}", err.message);
@@ -439,16 +410,7 @@ var app_default = app;
 
 // src/server.ts
 var httpServer = import_http.default.createServer(app_default);
-var corsOptions = {
-  origin: [
-    "https://studio.apollographql.com",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:4000"
-  ],
-  credentials: true
-};
-app_default.use((0, import_cors.default)(corsOptions));
+app_default.use((0, import_cors.default)());
 app_default.use(import_express2.default.json());
 var resolvers = {
   Query: query_resolver_default,
@@ -464,9 +426,7 @@ var resolvers = {
     yield mongoose_default();
     yield server.start();
     app_default.get("/", (req, res) => {
-      req.cookies("asd");
-      res.send("Hello World!");
-      res.cookie("test", "asd");
+      res.send('Welcome to "Collaborative Whiteboard"!');
     });
     app_default.use(
       "/graphql",

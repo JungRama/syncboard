@@ -29,7 +29,7 @@ const corsOptions = {
 };
 
 // Apply CORS and JSON middleware to the Express app
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 // Define GraphQL resolvers
@@ -60,9 +60,10 @@ type Context = {
   await server.start();
 
   app.get("/", (req, res) => {
-    req.cookies("asd");
-    res.send("Hello World!");
-    res.cookie("test", "asd");
+    // req.cookies("asd");
+    // res.send("Hello World!");
+    // res.cookie("test", "asd");
+    res.send('Welcome to "Collaborative Whiteboard"!');
   });
 
   // Apply the Apollo Server middleware to the Express app
