@@ -2,7 +2,7 @@ const typeDefs = `#graphql
   scalar DateTime
   type Query {
     # Auth
-    refreshAccessToken: TokenResponse!
+    refreshAccessToken(refresh_token: String!): TokenResponse!
     logoutUser: Boolean!
 
     # User
@@ -20,7 +20,6 @@ const typeDefs = `#graphql
     email: String!
     password: String!
     passwordConfirm: String!
-    photo: String
   }
 
   input LoginInput {
@@ -31,6 +30,7 @@ const typeDefs = `#graphql
   type TokenResponse {
     status: String!
     access_token: String!
+    refresh_token: String!
   }
 
   type UserResponse {
@@ -42,7 +42,6 @@ const typeDefs = `#graphql
     id: ID!
     name: String!
     email: String!
-    photo: String!
     role: String!
     createdAt: DateTime
     updatedAt: DateTime

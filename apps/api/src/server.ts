@@ -11,8 +11,10 @@ import cors from "cors";
 import connectDB from "~/core/mongoose";
 
 import app from "./app";
+import userAuth, { UserAuthFn } from "~/middleware/user-auth";
 
 import { PORT } from "~/env.config";
+import { IUser } from "./models/user";
 
 // Create an HTTP server using Express
 const httpServer = http.createServer(app);
@@ -42,6 +44,7 @@ const resolvers = {
 type Context = {
   req: express.Request;
   res: express.Response;
+  userAuth: UserAuthFn;
 };
 
 // Start the server
@@ -79,7 +82,7 @@ type Context = {
         req: express.Request;
         res: express.Response;
       }): Promise<Context> => {
-        return { req, res };
+        return { req, res, userAuth };
       },
     })
   );

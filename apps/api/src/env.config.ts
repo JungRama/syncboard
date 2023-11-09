@@ -15,15 +15,8 @@ export const MONGODB_URI =
 export const JWT_ACCESS_PRIVATE_KEY =
   process.env.JWT_ACCESS_PRIVATE_KEY || "XcVH/KjbFhUGSB1Ojv+Nrw==";
 
-export const JWT_ACCESS_PUBLIC_KEY =
-  process.env.JWT_ACCESS_PUBLIC_KEY || "WcZqBSFyXzSaacN6fzARVg==";
-
-/* ----------------------------------- JWT REFRESH KEY ---------------------------------- */
 export const JWT_REFRESH_PRIVATE_KEY =
-  process.env.JWT_REFRESH_PRIVATE_KEY || "S60apQby8sdfaTo5LsWfrw==";
-
-export const JWT_REFRESH_PUBLIC_KEY =
-  process.env.JWT_REFRESH_PUBLIC_KEY || "1APYcPZipytM6sHWwuVjCw==";
+  process.env.JWT_REFRESH_PRIVATE_KEY || "1APYcPZipytM6sHWwuVjCw==";
 
 /* ------------------------------- JWT EXPIRED ------------------------------ */
 export const JWT_ACCESS_TOKEN_EXPIRED_IN: number = process.env

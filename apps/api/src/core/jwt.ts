@@ -16,11 +16,8 @@ export const signJwt = (
   // Retrieve the secret key from the environment variables
   const keySecret = process.env[Key] ?? "SECRET";
 
-  // Convert the secret key from base64 to ASCII
-  const privateKey = Buffer.from(keySecret, "base64");
-
   // Sign the JWT using the payload, private key, and options
-  return jwt.sign(payload, privateKey, {
+  return jwt.sign(payload, keySecret, {
     ...(options && options),
   });
 };
@@ -28,20 +25,22 @@ export const signJwt = (
 /**
  * Verifies a JSON Web Token (JWT) using the provided token and key.
  * @param token - The JWT to be verified.
- * @param Key - The name of the environment variable that contains the public key.
+ * @param Key - The name of the environment variable that contains the secret key.
  * @returns The decoded payload of the verified JWT.
  */
 export const verifyJwt = (token: string, Key: string) => {
   try {
-    // Retrieve the public key from the environment variables
+    // Retrieve the secret key from the environment variables
     const keySecret = process.env[Key] ?? "SECRET";
 
-    // Convert the public key from base64 to a Buffer
-    const publicKey = Buffer.from(keySecret, "base64");
-
     // Verify the JWT using the token and public key
-    const decoded = jwt.verify(token, publicKey);
-    return decoded;
+    const decoded = jwt.verify(token, keySecret);
+
+    return decoded as {
+      user: string;
+      iat: number;
+      exp: number;
+    };
   } catch (error) {
     // Handle any errors that occur during verification
     errorHandler(error);

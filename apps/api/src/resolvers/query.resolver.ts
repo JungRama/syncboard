@@ -1,12 +1,9 @@
-// import authController from "../controllers/auth.controller.js";
-// import userController from "../controllers/user.controller.js";
+import authController from "~/controllers/auth.controller.js";
 
 export default {
   // Users
-  getMe: () => {
-    return "test";
-  },
+  getMe: authController.getMe,
   // Auth
-  // refreshAccessToken: authController.refreshAccessToken,
-  // logoutUser: authController.logoutHandler,
+  refreshAccessToken: authController.refreshAccessToken,
+  logoutUser: authController.logout,
 };

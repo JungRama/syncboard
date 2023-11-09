@@ -71,7 +71,7 @@ var typeDefs = `#graphql
   scalar DateTime
   type Query {
     # Auth
-    refreshAccessToken: TokenResponse!
+    refreshAccessToken(refresh_token: String!): TokenResponse!
     logoutUser: Boolean!
 
     # User
@@ -89,7 +89,6 @@ var typeDefs = `#graphql
     email: String!
     password: String!
     passwordConfirm: String!
-    photo: String
   }
 
   input LoginInput {
@@ -100,6 +99,7 @@ var typeDefs = `#graphql
   type TokenResponse {
     status: String!
     access_token: String!
+    refresh_token: String!
   }
 
   type UserResponse {
@@ -111,7 +111,6 @@ var typeDefs = `#graphql
     id: ID!
     name: String!
     email: String!
-    photo: String!
     role: String!
     createdAt: DateTime
     updatedAt: DateTime
@@ -120,7 +119,7 @@ var typeDefs = `#graphql
 var schemas_default = typeDefs;
 
 // src/controllers/auth.controller.ts
-var import_graphql2 = require("graphql");
+var import_graphql3 = require("graphql");
 
 // src/models/user.ts
 var import_mongoose = __toESM(require("mongoose"));
@@ -197,9 +196,7 @@ var PORT = process.env.PORT || 8e3;
 var RATE_LIMIT = process.env.RATE_LIMIT || 60;
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://<username>:<password>@cluster0.wxu482x.mongodb.net/?retryWrites=true&w=majority";
 var JWT_ACCESS_PRIVATE_KEY = process.env.JWT_ACCESS_PRIVATE_KEY || "XcVH/KjbFhUGSB1Ojv+Nrw==";
-var JWT_ACCESS_PUBLIC_KEY = process.env.JWT_ACCESS_PUBLIC_KEY || "WcZqBSFyXzSaacN6fzARVg==";
-var JWT_REFRESH_PRIVATE_KEY = process.env.JWT_REFRESH_PRIVATE_KEY || "S60apQby8sdfaTo5LsWfrw==";
-var JWT_REFRESH_PUBLIC_KEY = process.env.JWT_REFRESH_PUBLIC_KEY || "1APYcPZipytM6sHWwuVjCw==";
+var JWT_REFRESH_PRIVATE_KEY = process.env.JWT_REFRESH_PRIVATE_KEY || "1APYcPZipytM6sHWwuVjCw==";
 var JWT_ACCESS_TOKEN_EXPIRED_IN = process.env.JWT_ACCESS_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRED_IN) : 15;
 var JWT_REFRESH_TOKEN_EXPIRED_IN = process.env.JWT_REFRESH_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRED_IN) : 10;
 var REDIS_HOST = process.env.REDIS_HOST || "<redis_host>";
@@ -262,9 +259,36 @@ var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var signJwt = (payload, Key, options) => {
   var _a;
   const keySecret = (_a = process.env[Key]) != null ? _a : "SECRET";
-  const privateKey = Buffer.from(keySecret, "base64");
-  return import_jsonwebtoken.default.sign(payload, privateKey, __spreadValues({}, options && options));
+  return import_jsonwebtoken.default.sign(payload, keySecret, __spreadValues({}, options && options));
 };
+var verifyJwt = (token, Key) => {
+  var _a;
+  try {
+    const keySecret = (_a = process.env[Key]) != null ? _a : "SECRET";
+    const decoded = import_jsonwebtoken.default.verify(token, keySecret);
+    return decoded;
+  } catch (error) {
+    error_controller_default(error);
+  }
+};
+
+// src/middleware/check-auth.ts
+var import_graphql2 = require("graphql");
+var checkAuth = (req, userAuth2) => __async(void 0, null, function* () {
+  try {
+    const authUser = yield userAuth2(req);
+    if (!authUser) {
+      throw new import_graphql2.GraphQLError("You are not logged in", {
+        extensions: {
+          code: "AUTHENTICATION_ERROR"
+        }
+      });
+    }
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var check_auth_default = checkAuth;
 
 // src/controllers/auth.controller.ts
 var cookieOptions = {
@@ -297,7 +321,7 @@ var signup = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { 
   } catch (error) {
     console.log(JSON.stringify(error));
     if (error.code === 11e3) {
-      throw new import_graphql2.GraphQLError("User Already Exist", {
+      throw new import_graphql3.GraphQLError("User Already Exist", {
         extensions: {
           code: "FORBIDDEN"
         }
@@ -325,7 +349,7 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
   try {
     const user = yield user_default.findOne({ email }).select("+password +verified");
     if (!user || !(yield user.comparePasswords(password, (_a = user.password) != null ? _a : ""))) {
-      throw new import_graphql2.GraphQLError("Invalid email or password", {
+      throw new import_graphql3.GraphQLError("Invalid email or password", {
         extensions: {
           code: "AUTHENTICATION_ERROR"
         }
@@ -342,7 +366,77 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
     }));
     return {
       status: "success",
-      access_token
+      access_token,
+      refresh_token
+    };
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var refreshAccessToken = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, res }) {
+  try {
+    const { refresh_token: current_refresh_token } = args;
+    const decoded = verifyJwt(current_refresh_token, "JWT_REFRESH_PRIVATE_KEY");
+    if (!decoded) {
+      throw new import_graphql3.GraphQLError("Could not refresh access token", {
+        extensions: {
+          code: "FORBIDDEN"
+        }
+      });
+    }
+    const session = yield redis_default.get(decoded.user);
+    if (!session) {
+      throw new import_graphql3.GraphQLError("User session has expired", {
+        extensions: {
+          code: "FORBIDDEN"
+        }
+      });
+    }
+    const user = yield user_default.findById(JSON.parse(session)._id).select("+verified");
+    if (!user || !user.verified) {
+      throw new import_graphql3.GraphQLError("Could not refresh access token", {
+        extensions: {
+          code: "FORBIDDEN"
+        }
+      });
+    }
+    const { access_token, refresh_token } = yield signTokens(user);
+    res.cookie("refresh_token", refresh_token, refreshTokenCookieOptions);
+    res.cookie("access_token", access_token, accessTokenCookieOptions);
+    res.cookie("logged_in", true, __spreadProps(__spreadValues({}, accessTokenCookieOptions), {
+      httpOnly: false
+    }));
+    return {
+      status: "success",
+      access_token,
+      refresh_token
+    };
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var logout = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, res, userAuth: userAuth2 }) {
+  try {
+    yield check_auth_default(req, userAuth2);
+    const user = yield userAuth2(req);
+    if (user) {
+      yield redis_default.del(user._id.toString());
+    }
+    res.cookie("access_token", "", { maxAge: -1 });
+    res.cookie("refresh_token", "", { maxAge: -1 });
+    res.cookie("logged_in", "", { maxAge: -1 });
+    return true;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var getMe = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
+  try {
+    yield check_auth_default(req, userAuth2);
+    const user = yield userAuth2(req);
+    return {
+      status: "success",
+      user
     };
   } catch (error) {
     error_controller_default(error);
@@ -350,9 +444,10 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
 });
 var auth_controller_default = {
   signup,
-  login
-  // refreshAccessToken,
-  // logoutHandler,
+  login,
+  logout,
+  getMe,
+  refreshAccessToken
 };
 
 // src/resolvers/mutation.resolver.ts
@@ -364,12 +459,10 @@ var mutation_resolver_default = {
 // src/resolvers/query.resolver.ts
 var query_resolver_default = {
   // Users
-  getMe: () => {
-    return "test";
-  }
+  getMe: auth_controller_default.getMe,
   // Auth
-  // refreshAccessToken: authController.refreshAccessToken,
-  // logoutUser: authController.logoutHandler,
+  refreshAccessToken: auth_controller_default.refreshAccessToken,
+  logoutUser: auth_controller_default.logout
 };
 
 // src/server.ts
@@ -408,6 +501,48 @@ process.on("uncaughtException", (err) => {
 });
 var app_default = app;
 
+// src/middleware/user-auth.ts
+var import_graphql4 = require("graphql");
+var userAuth = (req) => __async(void 0, null, function* () {
+  try {
+    let access_token;
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+      access_token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies.access_token) {
+      const { access_token: token } = req.cookies;
+      access_token = token;
+    }
+    if (!access_token)
+      return false;
+    const decoded = verifyJwt(access_token, "JWT_ACCESS_PRIVATE_KEY");
+    if (!decoded)
+      return false;
+    const session = yield redis_default.get(decoded.user);
+    if (!session) {
+      throw new import_graphql4.GraphQLError("Session has expired", {
+        extensions: {
+          code: "FORBIDDEN"
+        }
+      });
+    }
+    const user = yield user_default.findById(JSON.parse(session).id).select("+verified");
+    if (!user || !user.verified) {
+      throw new import_graphql4.GraphQLError(
+        "The user belonging to this token no longer exists",
+        {
+          extensions: {
+            code: "FORBIDDEN"
+          }
+        }
+      );
+    }
+    return user;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var user_auth_default = userAuth;
+
 // src/server.ts
 var httpServer = import_http.default.createServer(app_default);
 app_default.use((0, import_cors.default)());
@@ -437,7 +572,7 @@ var resolvers = {
           req,
           res
         }) {
-          return { req, res };
+          return { req, res, userAuth: user_auth_default };
         })
       })
     );
