@@ -14,24 +14,18 @@ import app from "./app";
 import userAuth, { UserAuthFn } from "~/middleware/user-auth";
 
 import { PORT } from "~/env.config";
-import { IUser } from "./models/user";
 
 // Create an HTTP server using Express
 const httpServer = http.createServer(app);
 
 // Define CORS options
 const corsOptions = {
-  origin: [
-    "https://studio.apollographql.com",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:4000",
-  ],
+  origin: ["https://studio.apollographql.com", `http://localhost:${PORT}`],
   credentials: true,
 };
 
 // Apply CORS and JSON middleware to the Express app
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Define GraphQL resolvers
@@ -63,9 +57,6 @@ type Context = {
   await server.start();
 
   app.get("/", (req, res) => {
-    // req.cookies("asd");
-    // res.send("Hello World!");
-    // res.cookie("test", "asd");
     res.send('Welcome to "Collaborative Whiteboard"!');
   });
 
