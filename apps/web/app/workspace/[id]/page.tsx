@@ -3,23 +3,23 @@ import { type Editor, Tldraw } from '@tldraw/tldraw'
 import '@tldraw/tldraw/tldraw.css'
 import {useState, useCallback, useEffect} from 'react'
 
-export default function Page() {
+export default function Page(): JSX.Element {
   const [editor, setEditor] = useState<Editor>()
   
-  const setAppToState = useCallback((editor: Editor) => {
-    setEditor(editor)
+  const setAppToState = useCallback((editorElement: Editor) => {
+    setEditor(editorElement)
   }, [])
 
   const [storeEvents, setStoreEvents] = useState<string[]>([])
 
   useEffect(() => {
 
-      function logChangeEvent(eventName: string) {
+		const logChangeEvent = (eventName: string): void => {
 			setStoreEvents((events) => [eventName, ...events])
     }
     
     editor?.on('change', (change) => {
-      		if (change.source === 'user') {
+			if (change.source === 'user') {
 				// Added
 				for (const record of Object.values(change.changes.added)) {
 					if (record.typeName === 'shape') {
