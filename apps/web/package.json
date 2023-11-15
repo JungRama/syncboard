@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev:win": "set HOST=localhost && set PORT=1234 && npx y-websocket --kill-others"
   },
   "dependencies": {
     "@tldraw/tldraw": "2.0.0-alpha.17",

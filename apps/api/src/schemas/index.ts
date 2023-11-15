@@ -7,12 +7,31 @@ const typeDefs = `#graphql
 
     # User
     getMe: UserResponse!
+
+    # Files
+    getFiles(search: String): [File!]!
   }
 
   type Mutation {
     # Auth
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): UserResponse!
+
+    # Files
+    createFile: File!
+    updateFile(input: UpdateFileInput!): File!
+    deleteFile(input: DeleteFileInput!): Boolean
+  }
+
+  input UpdateFileInput {
+    id: String!
+    name: String
+    thumbnail: String
+    whiteboard: String
+  }
+  
+  input DeleteFileInput {
+    id: String!
   }
 
   input SignUpInput {
@@ -25,6 +44,21 @@ const typeDefs = `#graphql
   input LoginInput {
     email: String!
     password: String!
+  }
+  
+  type File {
+    id: ID!
+    name: String!
+    thumbnail: String
+    whiteboard: String
+    userAccess: [UserAccess!]!
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type UserAccess {
+    userId: String!
+    role: String!
   }
 
   type TokenResponse {
@@ -46,6 +80,6 @@ const typeDefs = `#graphql
     createdAt: DateTime
     updatedAt: DateTime
   }
-`;
+`
 
-export default typeDefs;
+export default typeDefs

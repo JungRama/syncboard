@@ -76,12 +76,31 @@ var typeDefs = `#graphql
 
     # User
     getMe: UserResponse!
+
+    # Files
+    getFiles(search: String): [File!]!
   }
 
   type Mutation {
     # Auth
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): UserResponse!
+
+    # Files
+    createFile: File!
+    updateFile(input: UpdateFileInput!): File!
+    deleteFile(input: DeleteFileInput!): Boolean
+  }
+
+  input UpdateFileInput {
+    id: String!
+    name: String
+    thumbnail: String
+    whiteboard: String
+  }
+  
+  input DeleteFileInput {
+    id: String!
   }
 
   input SignUpInput {
@@ -94,6 +113,21 @@ var typeDefs = `#graphql
   input LoginInput {
     email: String!
     password: String!
+  }
+  
+  type File {
+    id: ID!
+    name: String!
+    thumbnail: String
+    whiteboard: String
+    userAccess: [UserAccess!]!
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type UserAccess {
+    userId: String!
+    role: String!
   }
 
   type TokenResponse {
@@ -319,7 +353,6 @@ var signup = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { 
       user
     };
   } catch (error) {
-    console.log(JSON.stringify(error));
     if (error.code === 11e3) {
       throw new import_graphql3.GraphQLError("User Already Exist", {
         extensions: {
@@ -450,10 +483,102 @@ var auth_controller_default = {
   refreshAccessToken
 };
 
+// src/models/file.ts
+var import_mongoose2 = __toESM(require("mongoose"));
+var fileSchema = new import_mongoose2.Schema(
+  {
+    name: {
+      type: String,
+      required: true
+    },
+    thumbnail: {
+      type: String,
+      required: false
+    },
+    whiteboard: {
+      type: String,
+      required: false
+    },
+    userAccess: [
+      {
+        userId: {
+          type: import_mongoose2.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        role: {
+          type: String,
+          required: true
+        }
+      }
+    ]
+  }
+  // { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+);
+var fileModel = import_mongoose2.default.model("File", fileSchema);
+var file_default = fileModel;
+
+// src/controllers/files.controller.ts
+var import_underscore = __toESM(require("underscore"));
+var get = () => {
+};
+var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
+  try {
+    yield check_auth_default(req, userAuth2);
+    const user = yield userAuth2(req);
+    if (!user)
+      throw new Error("User not found");
+    const file = yield file_default.create({
+      name: "Untitled File",
+      thumbnail: null,
+      whiteboard: null,
+      userAccess: [
+        {
+          userId: user == null ? void 0 : user._id,
+          role: "OWNER"
+        }
+      ]
+    });
+    return file;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var update = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
+  try {
+    yield check_auth_default(req, userAuth2);
+    const user = yield userAuth2(req);
+    if (!user)
+      throw new Error("User not found");
+    const getInput = import_underscore.default.omit(args.input, import_underscore.default.isNull);
+    const file = yield file_default.findByIdAndUpdate(
+      args.input.id,
+      __spreadValues({}, getInput),
+      {
+        new: true
+      }
+    );
+    return file;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var del = () => {
+};
+var files_controller_default = {
+  get,
+  create,
+  update,
+  del
+};
+
 // src/resolvers/mutation.resolver.ts
 var mutation_resolver_default = {
   signupUser: auth_controller_default.signup,
-  loginUser: auth_controller_default.login
+  loginUser: auth_controller_default.login,
+  createFile: files_controller_default.create,
+  updateFile: files_controller_default.update
+  // deleteFile
 };
 
 // src/resolvers/query.resolver.ts
@@ -469,12 +594,12 @@ var query_resolver_default = {
 var import_cors = __toESM(require("cors"));
 
 // src/core/mongoose.ts
-var import_mongoose2 = __toESM(require("mongoose"));
+var import_mongoose3 = __toESM(require("mongoose"));
 function connectDB() {
   return __async(this, null, function* () {
     try {
-      yield import_mongoose2.default.connect(MONGODB_URI);
-      const db = import_mongoose2.default.connection;
+      yield import_mongoose3.default.connect(MONGODB_URI);
+      const db = import_mongoose3.default.connection;
       db.on("error", console.error.bind(console, "connection error:"));
       console.log("Database connected successfully");
     } catch (error) {

@@ -112,8 +112,6 @@ export function useYjsStore({
         >,
         transaction: Y.Transaction,
       ) => {
-        if (transaction.local) return;
-
         const toRemove: TLRecord['id'][] = [];
         const toPut: TLRecord[] = [];
 
@@ -139,7 +137,7 @@ export function useYjsStore({
           if (toPut.length) store.put(toPut);
         });
 
-        if (onUpdate) {
+        if (onUpdate && transaction.local) {
           onUpdate(store);
         }
       };

@@ -30,6 +30,9 @@ importers:
       '@apollo/server':
         specifier: ^4.9.5
         version: 4.9.5(graphql@16.8.1)
+      '@types/underscore':
+        specifier: ^1.11.14
+        version: 1.11.14
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -63,6 +66,9 @@ importers:
       redis:
         specifier: ^4.6.10
         version: 4.6.10
+      underscore:
+        specifier: ^1.13.6
+        version: 1.13.6
       validator:
         specifier: ^13.11.0
         version: 13.11.0
@@ -4402,6 +4408,10 @@ packages:
 
   /@types/triple-beam@1.3.4:
     resolution: {integrity: sha512-HlJjF3wxV4R2VQkFpKe0YqJLilYNgtRtsqqZtby7RkVsSs+i+vbyzjtUwpFEdUCKcrGzCiEJE7F/0mKjh0sunA==}
+    dev: false
+
+  /@types/underscore@1.11.14:
+    resolution: {integrity: sha512-13RYuwqoXZgLO3Nu4zsISqYAexCILtKIMGx+7+vY6gEsGFjrcHU57iDxPmaA2E5d4v5NwebNweiXLbaZWHWI9A==}
     dev: false
 
   /@types/validator@13.11.6:

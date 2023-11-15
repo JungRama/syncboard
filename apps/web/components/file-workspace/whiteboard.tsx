@@ -68,34 +68,33 @@ export default function Whiteboard() {
   //   console.log(JSON.stringify(editor?.store.getSnapshot()));
   // };
 
-  // const overideUI: TLUiOverrides = {
-  //   menu(_editor, menu) {
-  //     const newMenuItem = menuItem({
-  //       id: 'back-to-files',
-  //       title: 'Back to all workspace',
-  //       // @ts-expect-error
-  //       label: 'Back to all workspace',
-  //       readonlyOk: false,
-  //       onSelect() {
-  //         router.push('/files');
-  //       },
-  //     });
-  //     menu.unshift(newMenuItem);
-  //     return menu;
-  //   },
-  // };
+  const overideUI: TLUiOverrides = {
+    menu(_editor, menu) {
+      const newMenuItem = menuItem({
+        id: 'back-to-files',
+        title: 'Back to all workspace',
+        // @ts-expect-error
+        label: 'Back to all workspace',
+        readonlyOk: false,
+        onSelect() {
+          router.push('/files');
+        },
+      });
+      menu.unshift(newMenuItem);
+      return menu;
+    },
+  };
 
   const store = useYjsStore({
     roomId: 'example17',
     hostUrl: 'ws://localhost:1234',
     onUpdate: _.debounce((store) => {
-      console.log(store);
+      console.log(JSON.stringify(store.getSnapshot()));
+      // alert('123');
     }, 3000),
   });
 
-  return <Tldraw autoFocus store={store} />;
-
-  // return <Tldraw overrides={overideUI} onMount={setAppToState} />;
+  return <Tldraw overrides={overideUI} autoFocus store={store} />;
 }
 
 const NameEditor = track(() => {
