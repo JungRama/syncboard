@@ -9,12 +9,12 @@ export default function WorkspaceLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <div className="grid grid-cols-12">
-      <section className="col-span-12 min-h-[100vh] md:col-span-4 lg:col-span-3 xl:col-span-2">
+    <div className="flex max-h-full">
+      <section className="fixed top-0 z-50 h-[100vh] w-64 overflow-auto border-r border-gray-200 bg-white md:sticky md:bg-transparent">
         <Sidebar></Sidebar>
       </section>
 
-      <section className="col-span-12 md:col-span-8 lg:col-span-9 lg:border-l xl:col-span-10">
+      <section className="flex flex-1 flex-col ">
         <FileHeader></FileHeader>
 
         <Separator />
@@ -24,7 +24,7 @@ export default function WorkspaceLayout({
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="col-span-12 md:col-span-3 lg:col-span-3 xl:col-span-3"
+                className="col-span-12 sm:col-span-6 md:col-span-6 lg:col-span-4 xl:col-span-3"
               >
                 <FileItem></FileItem>
               </div>

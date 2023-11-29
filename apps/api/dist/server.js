@@ -671,7 +671,11 @@ var user_auth_default = userAuth;
 // src/server.ts
 var httpServer = import_http.default.createServer(app_default);
 var corsOptions = {
-  origin: ["https://studio.apollographql.com", `http://localhost:${PORT}`],
+  origin: [
+    "https://studio.apollographql.com",
+    `http://localhost:${PORT}`,
+    `http://localhost:3000`
+  ],
   credentials: true
 };
 app_default.use((0, import_cors.default)(corsOptions));

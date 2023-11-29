@@ -9,6 +9,7 @@ import {
 import { ArrowLeft, ShareIcon } from 'lucide-react';
 import Link from 'next/link';
 import ContentEditable from 'react-contenteditable';
+import FileShareDialog from './file-share-dialog';
 
 export default function FileWorkspaceHeader() {
   return (
@@ -42,10 +43,7 @@ export default function FileWorkspaceHeader() {
           </TooltipProvider>
         </div>
 
-        <Button className="flex gap-2">
-          <ShareIcon className="h-4"></ShareIcon>
-          <p>Share</p>
-        </Button>
+        <FileShareDialog></FileShareDialog>
       </div>
     </div>
   );

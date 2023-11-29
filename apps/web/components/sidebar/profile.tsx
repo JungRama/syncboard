@@ -13,7 +13,7 @@ export default function Profile() {
         <span className="text-sm">Jung Rama</span>
       </div>
 
-      <Button className="rounded-full px-2" variant="secondary">
+      <Button className="h-8 w-8 rounded-full px-2" variant="secondary">
         <LogOut className="h-4" />
       </Button>
     </div>

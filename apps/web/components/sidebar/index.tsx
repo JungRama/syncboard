@@ -5,12 +5,15 @@ import { Search } from 'lucide-react';
 import Favorites from './favorites';
 import Profile from './profile';
 import RecentFile from './recent-file';
+import Image from 'next/image';
 
 export default function Sidebar() {
   return (
     <>
       <div className="my-3 flex justify-center">
-        <Button variant="link">LOGO</Button>
+        <Button variant="link">
+          <Image src={'/logo.svg'} width={130} height={130} alt="logo"></Image>
+        </Button>
       </div>
       <Separator />
 
