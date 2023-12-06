@@ -288,6 +288,9 @@ var errorHandler = (err) => {
 };
 var error_controller_default = errorHandler;
 
+// src/controllers/auth.controller.ts
+var import_axios = __toESM(require("axios"));
+
 // src/core/jwt.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var signJwt = (payload, Key, options) => {
@@ -406,6 +409,25 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
     error_controller_default(error);
   }
 });
+var oAuth = (_0) => __async(void 0, [_0], function* ({ req, res }) {
+  try {
+    const githubOauth = yield import_axios.default.get("https://github.com/login/oauth/access_token", {
+      params: {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: req.query.code
+      },
+      headers: {
+        accept: "application/json"
+      }
+    }).then((response) => __async(void 0, null, function* () {
+      console.log(response.data.access_token);
+      return res.send(response.data.access_token);
+    }));
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
 var refreshAccessToken = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, res }) {
   try {
     const { refresh_token: current_refresh_token } = args;
@@ -478,6 +500,7 @@ var getMe = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, arg
 var auth_controller_default = {
   signup,
   login,
+  oAuth,
   logout,
   getMe,
   refreshAccessToken
@@ -696,6 +719,13 @@ var resolvers = {
     app_default.get("/", (req, res) => {
       res.send('Welcome to "Collaborative Whiteboard"!');
     });
+    app_default.get(
+      "/github/callback",
+      (req, res) => auth_controller_default.oAuth({
+        req,
+        res
+      })
+    );
     app_default.use(
       "/graphql",
       (0, import_cors.default)(),

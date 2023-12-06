@@ -2,6 +2,7 @@ import { GraphQLError } from 'graphql'
 import userModel, { IUser } from '~/models/user'
 import redisClient from '~/core/redis'
 import errorHandler from '~/controllers/error.controller'
+import axios from 'axios'
 
 import { signJwt, verifyJwt } from '~/core/jwt'
 
@@ -29,6 +30,13 @@ interface SignInInput {
 		email: string
 		password: string
 		passwordConfirm: string
+	}
+}
+
+interface oAuthInput {
+	input: {
+		strategy: string
+		code: string
 	}
 }
 
@@ -158,6 +166,36 @@ const login = async (
 			access_token,
 			refresh_token,
 		}
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const oAuth = async ({ req, res }: { req: Request; res: Response }) => {
+	try {
+		// if (req.body.strategy === 'GITHUB') {
+		const githubOauth = await axios
+			.get('https://github.com/login/oauth/access_token', {
+				params: {
+					client_id: process.env.GITHUB_CLIENT_ID,
+					client_secret: process.env.GITHUB_CLIENT_SECRET,
+					code: req.query.code,
+				},
+				headers: {
+					accept: 'application/json',
+				},
+			})
+			.then(async (response) => {
+				console.log(response.data.access_token)
+				// res.json(data)
+				return res.send(response.data.access_token)
+			})
+
+		// const response = await githubOauth.json()
+		// console.log(response)
+
+		// return res.send(response)
+		// }
 	} catch (error) {
 		errorHandler(error)
 	}
@@ -304,6 +342,7 @@ const getMe = async (
 export default {
 	signup,
 	login,
+	oAuth,
 	logout,
 	getMe,
 	refreshAccessToken,
