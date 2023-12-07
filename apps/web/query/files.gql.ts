@@ -17,15 +17,6 @@ export const SIGN_UP_MUTATION = gql(/* GraphQL */ `
   }
 `);
 
-export const OAUTH_MUTATION = gql(/* GraphQL */ `
-  mutation OAuth($input: OAuthInput!) {
-    oAuth(input: $input) {
-      access_token
-      refresh_token
-    }
-  }
-`);
-
 export const GET_ME_QUERY = gql(/* GraphQL */ `
   query GetMe {
     getMe {

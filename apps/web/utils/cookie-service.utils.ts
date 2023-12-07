@@ -1,28 +1,29 @@
-import Cookies from 'js-cookie';
+import { setCookie, getCookie, deleteCookie } from 'cookies-next';
+import { cookies } from 'next/headers';
 
 const access_token_key = 'access_token';
 const refresh_token_key = 'refresh_token';
 
 export const getAccessToken = () => {
-  return Cookies.get(access_token_key);
+  return getCookie(access_token_key);
 };
 
 export const setAccessToken = (token: string | null) => {
-  return Cookies.set(access_token_key, token || '');
+  return setCookie(access_token_key, token || '');
 };
 
 export const removeAccessToken = () => {
-  return Cookies.remove(access_token_key);
+  return deleteCookie(access_token_key);
 };
 
 export const getRefreshToken = () => {
-  return Cookies.get(refresh_token_key);
+  return getCookie(refresh_token_key);
 };
 
 export const setRefreshToken = (token: string | null) => {
-  return Cookies.set(refresh_token_key, token || '');
+  return setCookie(refresh_token_key, token || '');
 };
 
 export const removeRefreshToken = () => {
-  return Cookies.remove(refresh_token_key);
+  return deleteCookie(refresh_token_key);
 };
