@@ -19,12 +19,7 @@ import {
   FormMessage,
 } from '@ui/components/ui/form';
 import { Input } from '@ui/components/ui/input';
-import {
-  AlertCircleIcon,
-  CheckCircle2,
-  Github,
-  Loader2Icon,
-} from 'lucide-react';
+import { AlertCircleIcon, CheckCircle2, Loader2Icon } from 'lucide-react';
 
 import useAuthService from '@/services/auth.service';
 import { getAccessToken } from '@/utils/cookie-service.utils';
@@ -33,6 +28,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { redirect } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import GithubAuth from './github-auth';
 
 export default function SignInForm() {
   const token = getAccessToken();
@@ -178,10 +174,7 @@ export default function SignInForm() {
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" className="flex w-full gap-1">
-                  <Github className="h-4 w-4"></Github>
-                  Github
-                </Button>
+                <GithubAuth></GithubAuth>
               </div>
             </div>
           </CardFooter>

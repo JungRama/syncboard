@@ -1,7 +1,6 @@
 import { useLayoutEffect } from 'react';
 
 import { Alert, AlertDescription } from '@ui/components/ui/alert';
-import { Button } from '@ui/components/ui/button';
 import {
   Card,
   CardContent,
@@ -20,7 +19,7 @@ import {
 } from '@ui/components/ui/form';
 import { Input } from '@ui/components/ui/input';
 import { useToast } from '@ui/components/ui/use-toast';
-import { AlertCircleIcon, Github, Loader2Icon } from 'lucide-react';
+import { AlertCircleIcon, Loader2Icon } from 'lucide-react';
 
 import useAuthService from '@/services/auth.service';
 import { setUser } from '@/store/user.store';
@@ -35,6 +34,8 @@ import { redirect, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { z } from 'zod';
+import { Button } from '@ui/components/ui/button';
+import GithubAuth from './github-auth';
 
 export default function SignInForm() {
   const dispatch = useDispatch();
@@ -164,13 +165,9 @@ export default function SignInForm() {
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" className="flex w-full gap-1" asChild>
-                  <a href="https://github.com/login/oauth/authorize?client_id=5ed0a8865f5a6cf3e3c6">
-                    <Github className="h-4 w-4"></Github>
-                    Github
-                  </a>
-                </Button>
               </div>
+
+              <GithubAuth></GithubAuth>
             </div>
           </CardFooter>
         </Card>

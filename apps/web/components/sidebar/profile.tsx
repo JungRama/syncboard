@@ -3,11 +3,29 @@
 import { Button } from '@ui/components/ui/button';
 import { Avatar, AvatarImage } from '@ui/components/ui/avatar';
 import { LogOut } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store/index.store';
+import useAuthService from '@/services/auth.service';
+import {
+  removeAccessToken,
+  removeRefreshToken,
+} from '@/utils/cookie-service.utils';
+import { setUser } from '@/store/user.store';
+import { useRouter } from 'next/navigation';
 
 export default function Profile() {
   const userData = useSelector((state: RootState) => state.user?.user);
+  const dispatch = useDispatch();
+
+  const { logout, loadingLogout, errorLogout } = useAuthService();
+
+  const logoutAction = () => {
+    logout();
+    removeAccessToken();
+    removeRefreshToken();
+    dispatch(setUser(null));
+    window.location.href = '/auth';
+  };
 
   return (
     <div className="mx-3 my-3 flex items-center justify-between">
@@ -17,10 +35,14 @@ export default function Profile() {
             <Avatar className="h-8 w-8">
               <AvatarImage src="https://github.com/shadcn.png" />
             </Avatar>
-            <span className="text-sm">{userData.name}</span>
+            <span className="text-sm">{userData?.name}</span>
           </div>
 
-          <Button className="h-8 w-8 rounded-full px-2" variant="secondary">
+          <Button
+            className="h-8 w-8 rounded-full px-2"
+            variant="secondary"
+            onClick={logoutAction}
+          >
             <LogOut className="h-4" />
           </Button>
         </>

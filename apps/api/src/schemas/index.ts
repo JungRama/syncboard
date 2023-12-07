@@ -16,6 +16,7 @@ const typeDefs = `#graphql
     # Auth
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): UserResponse!
+    oAuth(input: OAuthInput!): TokenResponse!
 
     # Files
     createFile: File!
@@ -44,6 +45,11 @@ const typeDefs = `#graphql
   input LoginInput {
     email: String!
     password: String!
+  }
+
+  input OAuthInput {
+    strategy: String!
+    code: String!
   }
   
   type File {

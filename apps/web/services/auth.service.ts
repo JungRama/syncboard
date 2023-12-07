@@ -1,5 +1,6 @@
 import {
   GET_ME_QUERY,
+  LOGOUT_QUERY,
   OAUTH_MUTATION,
   SIGN_IN_MUTATION,
   SIGN_UP_MUTATION,
@@ -19,6 +20,9 @@ const useAuthService = () => {
   const [getMe, { loading: loadingGetMe, error: errorGetMe }] =
     useLazyQuery(GET_ME_QUERY);
 
+  const [logout, { loading: loadingLogout, error: errorLogout }] =
+    useLazyQuery(LOGOUT_QUERY);
+
   return {
     mutateLogin,
     loadingLogin,
@@ -35,6 +39,10 @@ const useAuthService = () => {
     getMe,
     loadingGetMe,
     errorGetMe,
+
+    logout,
+    loadingLogout,
+    errorLogout,
   };
 };
 

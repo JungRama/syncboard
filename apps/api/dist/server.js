@@ -85,6 +85,7 @@ var typeDefs = `#graphql
     # Auth
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): UserResponse!
+    oAuth(input: OAuthInput!): TokenResponse!
 
     # Files
     createFile: File!
@@ -113,6 +114,11 @@ var typeDefs = `#graphql
   input LoginInput {
     email: String!
     password: String!
+  }
+
+  input OAuthInput {
+    strategy: String!
+    code: String!
   }
   
   type File {
@@ -174,13 +180,12 @@ var userSchema = new import_mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      minlength: [8, "Password must be more than 8 characters"],
+      required: false,
       select: false
     },
     passwordConfirm: {
       type: String,
-      required: [true, "Please confirm your password"],
+      required: [false, "Please confirm your password"],
       validate: {
         validator: function(val) {
           return val === this.password;
@@ -409,21 +414,75 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
     error_controller_default(error);
   }
 });
-var oAuth = (_0) => __async(void 0, [_0], function* ({ req, res }) {
+var getOAuthProfile = (strategy, token) => __async(void 0, null, function* () {
   try {
-    const githubOauth = yield import_axios.default.get("https://github.com/login/oauth/access_token", {
-      params: {
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code: req.query.code
-      },
-      headers: {
-        accept: "application/json"
+    let profile = null;
+    if (strategy === "GITHUB") {
+      profile = yield (0, import_axios.default)({
+        method: "get",
+        url: `https://api.github.com/user`,
+        headers: {
+          Authorization: "token " + token
+        }
+      });
+    }
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+    return profile.data;
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+var oAuth = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { input: { strategy, code } }, { req, res }) {
+  try {
+    if (strategy === "GITHUB") {
+      const githubOauth = yield import_axios.default.get(
+        "https://github.com/login/oauth/access_token",
+        {
+          params: {
+            client_id: process.env.GITHUB_CLIENT_ID,
+            client_secret: process.env.GITHUB_CLIENT_SECRET,
+            code
+          },
+          headers: {
+            accept: "application/json"
+          }
+        }
+      );
+      if (githubOauth.data.error) {
+        throw new import_graphql3.GraphQLError("Github oauth error!", {
+          extensions: {
+            code: "AUTHENTICATION_ERROR"
+          }
+        });
       }
-    }).then((response) => __async(void 0, null, function* () {
-      console.log(response.data.access_token);
-      return res.send(response.data.access_token);
-    }));
+      const profile = yield getOAuthProfile(
+        "GITHUB",
+        githubOauth.data.access_token
+      );
+      let user = yield user_default.findOne({ email: profile.email });
+      if (!user) {
+        user = yield user_default.create({
+          name: profile.name,
+          email: profile.email,
+          password: "",
+          passwordConfirm: "",
+          verified: true
+        });
+      }
+      const { access_token, refresh_token } = yield signTokens(user);
+      res.cookie("refresh_token", refresh_token, refreshTokenCookieOptions);
+      res.cookie("access_token", access_token, accessTokenCookieOptions);
+      res.cookie("logged_in", true, __spreadProps(__spreadValues({}, accessTokenCookieOptions), {
+        httpOnly: false
+      }));
+      return {
+        status: "success",
+        access_token,
+        refresh_token
+      };
+    }
   } catch (error) {
     error_controller_default(error);
   }
@@ -599,6 +658,7 @@ var files_controller_default = {
 var mutation_resolver_default = {
   signupUser: auth_controller_default.signup,
   loginUser: auth_controller_default.login,
+  oAuth: auth_controller_default.oAuth,
   createFile: files_controller_default.create,
   updateFile: files_controller_default.update
   // deleteFile

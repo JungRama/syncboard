@@ -39,3 +39,9 @@ export const GET_ME_QUERY = gql(/* GraphQL */ `
     }
   }
 `);
+
+export const LOGOUT_QUERY = gql(/* GraphQL */ `
+  query Logout {
+    logoutUser
+  }
+`);

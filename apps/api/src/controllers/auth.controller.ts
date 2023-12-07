@@ -171,31 +171,107 @@ const login = async (
 	}
 }
 
-const oAuth = async ({ req, res }: { req: Request; res: Response }) => {
+/**
+ * Retrieves the OAuth profile for the given authentication strategy and token.
+ *
+ * @param {string} strategy - The authentication strategy.
+ * @param {string} token - The authentication token.
+ * @return {Promise<object>} The profile data for the authenticated user.
+ */
+const getOAuthProfile = async (strategy: string, token: string) => {
 	try {
-		// if (req.body.strategy === 'GITHUB') {
-		const githubOauth = await axios
-			.get('https://github.com/login/oauth/access_token', {
-				params: {
-					client_id: process.env.GITHUB_CLIENT_ID,
-					client_secret: process.env.GITHUB_CLIENT_SECRET,
-					code: req.query.code,
-				},
+		let profile = null
+
+		if (strategy === 'GITHUB') {
+			profile = await axios({
+				method: 'get',
+				url: `https://api.github.com/user`,
 				headers: {
-					accept: 'application/json',
+					Authorization: 'token ' + token,
 				},
 			})
-			.then(async (response) => {
-				console.log(response.data.access_token)
-				// res.json(data)
-				return res.send(response.data.access_token)
+		}
+
+		if (!profile) {
+			throw new Error('Profile not found')
+		}
+
+		return profile.data
+	} catch (error) {
+		throw new Error(error)
+	}
+}
+
+/**
+ * Authenticates the user using OAuth.
+ *
+ * @param {any} parent - The parent object.
+ * @param {oAuthInput} input - The input object containing the strategy and code.
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
+ * @return {Promise<object>} The object containing the status, access token, and refresh token.
+ */
+const oAuth = async (
+	parent: any,
+	{ input: { strategy, code } }: oAuthInput,
+	{ req, res }: { req: Request; res: Response }
+) => {
+	try {
+		if (strategy === 'GITHUB') {
+			const githubOauth = await axios.get(
+				'https://github.com/login/oauth/access_token',
+				{
+					params: {
+						client_id: process.env.GITHUB_CLIENT_ID,
+						client_secret: process.env.GITHUB_CLIENT_SECRET,
+						code: code,
+					},
+					headers: {
+						accept: 'application/json',
+					},
+				}
+			)
+
+			if (githubOauth.data.error) {
+				throw new GraphQLError('Github oauth error!', {
+					extensions: {
+						code: 'AUTHENTICATION_ERROR',
+					},
+				})
+			}
+
+			const profile = await getOAuthProfile(
+				'GITHUB',
+				githubOauth.data.access_token
+			)
+
+			let user = await userModel.findOne({ email: profile.email })
+
+			if (!user) {
+				user = await userModel.create({
+					name: profile.name,
+					email: profile.email,
+					password: '',
+					passwordConfirm: '',
+					verified: true,
+				})
+			}
+
+			const { access_token, refresh_token } = await signTokens(user)
+
+			res.cookie('refresh_token', refresh_token, refreshTokenCookieOptions)
+			res.cookie('access_token', access_token, accessTokenCookieOptions)
+			res.cookie('logged_in', true, {
+				...accessTokenCookieOptions,
+				httpOnly: false,
 			})
 
-		// const response = await githubOauth.json()
-		// console.log(response)
-
-		// return res.send(response)
-		// }
+			return {
+				status: 'success',
+				access_token,
+				refresh_token,
+			}
+		}
 	} catch (error) {
 		errorHandler(error)
 	}
