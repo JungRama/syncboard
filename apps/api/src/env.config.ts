@@ -22,12 +22,12 @@ export const JWT_REFRESH_PRIVATE_KEY =
 export const JWT_ACCESS_TOKEN_EXPIRED_IN: number = process.env
 	.JWT_ACCESS_TOKEN_EXPIRED_IN
 	? parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRED_IN)
-	: 15
+	: 120
 
 export const JWT_REFRESH_TOKEN_EXPIRED_IN = process.env
 	.JWT_REFRESH_TOKEN_EXPIRED_IN
 	? parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRED_IN)
-	: 10
+	: 120
 
 /* ------------------------------ REDIS CONFIG ------------------------------ */
 export const REDIS_HOST = process.env.REDIS_HOST || '<redis_host>'

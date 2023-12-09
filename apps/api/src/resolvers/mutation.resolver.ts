@@ -8,5 +8,4 @@ export default {
 
 	createFile: fileController.create,
 	updateFile: fileController.update,
-	// deleteFile
 }

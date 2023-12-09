@@ -1,3 +1,5 @@
+'use client';
+
 import { useLayoutEffect } from 'react';
 
 import { Alert, AlertDescription } from '@ui/components/ui/alert';

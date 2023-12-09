@@ -9,7 +9,7 @@ const typeDefs = `#graphql
     getMe: UserResponse!
 
     # Files
-    getFiles(search: String): [File!]!
+    getFiles(search: String): [File]!
   }
 
   type Mutation {
@@ -63,8 +63,14 @@ const typeDefs = `#graphql
   }
 
   type UserAccess {
-    userId: String!
+    userId: UserAccessDetail!
     role: String!
+  }
+
+  type UserAccessDetail {
+    _id: String!
+    name: String!
+    photo: String
   }
 
   type TokenResponse {

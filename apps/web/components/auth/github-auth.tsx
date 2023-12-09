@@ -7,7 +7,7 @@ export default function GithubAuth() {
   return (
     <Button variant="outline" className="flex w-full gap-1" asChild>
       <a
-        href={`https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}`}
+        href={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}`}
       >
         <Github className="h-4 w-4"></Github>
         Github

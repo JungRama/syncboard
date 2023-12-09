@@ -78,7 +78,7 @@ var typeDefs = `#graphql
     getMe: UserResponse!
 
     # Files
-    getFiles(search: String): [File!]!
+    getFiles(search: String): [File]!
   }
 
   type Mutation {
@@ -132,8 +132,14 @@ var typeDefs = `#graphql
   }
 
   type UserAccess {
-    userId: String!
+    userId: UserAccessDetail!
     role: String!
+  }
+
+  type UserAccessDetail {
+    _id: String!
+    name: String!
+    photo: String
   }
 
   type TokenResponse {
@@ -236,8 +242,8 @@ var RATE_LIMIT = process.env.RATE_LIMIT || 60;
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://<username>:<password>@cluster0.wxu482x.mongodb.net/?retryWrites=true&w=majority";
 var JWT_ACCESS_PRIVATE_KEY = process.env.JWT_ACCESS_PRIVATE_KEY || "XcVH/KjbFhUGSB1Ojv+Nrw==";
 var JWT_REFRESH_PRIVATE_KEY = process.env.JWT_REFRESH_PRIVATE_KEY || "1APYcPZipytM6sHWwuVjCw==";
-var JWT_ACCESS_TOKEN_EXPIRED_IN = process.env.JWT_ACCESS_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRED_IN) : 15;
-var JWT_REFRESH_TOKEN_EXPIRED_IN = process.env.JWT_REFRESH_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRED_IN) : 10;
+var JWT_ACCESS_TOKEN_EXPIRED_IN = process.env.JWT_ACCESS_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRED_IN) : 120;
+var JWT_REFRESH_TOKEN_EXPIRED_IN = process.env.JWT_REFRESH_TOKEN_EXPIRED_IN ? parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRED_IN) : 120;
 var REDIS_HOST = process.env.REDIS_HOST || "<redis_host>";
 var REDIS_PASSWORD = process.env.REDIS_PASSWORD || "<redis_password>";
 var REDIS_PORT = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 19027;
@@ -565,6 +571,9 @@ var auth_controller_default = {
   refreshAccessToken
 };
 
+// src/controllers/files.controller.ts
+var import_underscore = __toESM(require("underscore"));
+
 // src/models/file.ts
 var import_mongoose2 = __toESM(require("mongoose"));
 var fileSchema = new import_mongoose2.Schema(
@@ -601,9 +610,36 @@ var fileModel = import_mongoose2.default.model("File", fileSchema);
 var file_default = fileModel;
 
 // src/controllers/files.controller.ts
-var import_underscore = __toESM(require("underscore"));
-var get = () => {
-};
+var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { search }, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield userAuth2(req);
+    if (!user)
+      throw new Error("User not found");
+    const query = {
+      "userAccess.userId": user == null ? void 0 : user._id
+    };
+    if (search) {
+      Object.assign(query, {
+        name: { $regex: ".*" + search + ".*" }
+      });
+    }
+    const files = yield file_default.find(query).populate({
+      path: "userAccess.userId",
+      model: "User",
+      select: "name photo"
+      // populate: {
+      // 	path: 'components',
+      // 	model: 'Component'
+      // }
+      // Get friends of friends - populate the 'friends' array for every friend
+      // populate: { path: 'friends' }
+    });
+    console.log(JSON.stringify(files, null, 2));
+    return files;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
 var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
   try {
     yield check_auth_default(req, userAuth2);
@@ -614,6 +650,7 @@ var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, ar
       name: "Untitled File",
       thumbnail: null,
       whiteboard: null,
+      updatedAt: /* @__PURE__ */ new Date(),
       userAccess: [
         {
           userId: user == null ? void 0 : user._id,
@@ -661,7 +698,6 @@ var mutation_resolver_default = {
   oAuth: auth_controller_default.oAuth,
   createFile: files_controller_default.create,
   updateFile: files_controller_default.update
-  // deleteFile
 };
 
 // src/resolvers/query.resolver.ts
@@ -670,7 +706,9 @@ var query_resolver_default = {
   getMe: auth_controller_default.getMe,
   // Auth
   refreshAccessToken: auth_controller_default.refreshAccessToken,
-  logoutUser: auth_controller_default.logout
+  logoutUser: auth_controller_default.logout,
+  // Files
+  getFiles: files_controller_default.get
 };
 
 // src/server.ts

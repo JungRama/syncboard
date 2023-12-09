@@ -37,8 +37,6 @@ export default function GithubCallback(): JSX.Element {
       },
     });
 
-    console.log(oAuthData);
-
     if (!errorOAuth && oAuthData?.oAuth?.access_token) {
       setAccessToken(oAuthData.oAuth.access_token);
       setRefreshToken(oAuthData.oAuth.refresh_token);

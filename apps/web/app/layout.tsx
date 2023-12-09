@@ -25,14 +25,14 @@ export default function RootLayout({
 }): JSX.Element {
   return (
     <html lang="en">
-      <ReduxProvider store={store}>
-        <ApolloClientProvider>
-          <body className={plusJakartaSans.className}>
+      <body className={plusJakartaSans.className}>
+        <ReduxProvider store={store}>
+          <ApolloClientProvider>
             {children}
             <Toaster></Toaster>
-          </body>
-        </ApolloClientProvider>
-      </ReduxProvider>
+          </ApolloClientProvider>
+        </ReduxProvider>
+      </body>
     </html>
   );
 }
