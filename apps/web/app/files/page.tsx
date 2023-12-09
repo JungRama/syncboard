@@ -16,7 +16,6 @@ export default function WorkspaceLayout({
   const { getFiles, loadingGetFiles, errorGetFiles, dataFiles } =
     useFileService();
 
-  // const files = dataFiles
   useOnMountUnsafe(() => {
     getFiles();
   });
@@ -39,7 +38,6 @@ export default function WorkspaceLayout({
                 key={i}
                 className="col-span-12 sm:col-span-6 md:col-span-6 lg:col-span-4 xl:col-span-3"
               >
-                {JSON.stringify(item)}
                 <FileItem
                   title={item?.name}
                   thumbnail={item?.thumbnail}

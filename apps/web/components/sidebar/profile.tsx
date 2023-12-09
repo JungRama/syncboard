@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@ui/components/ui/button';
-import { Avatar, AvatarImage } from '@ui/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@ui/components/ui/avatar';
 import { LogOut } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store/index.store';
@@ -12,6 +12,7 @@ import {
 } from '@/utils/cookie-service.utils';
 import { setUser } from '@/store/user.store';
 import { useRouter } from 'next/navigation';
+import { initialName, userProfile } from '@/utils/user-profile.utils';
 
 export default function Profile() {
   const userData = useSelector((state: RootState) => state.user?.user);
@@ -33,7 +34,12 @@ export default function Profile() {
         <>
           <div className="flex w-full items-center justify-start gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
+              <AvatarImage
+                src={userProfile(userData?.photo, initialName(userData.name))}
+              ></AvatarImage>
+              <AvatarFallback className="text-[10px]">
+                {initialName(userData.name)}
+              </AvatarFallback>
             </Avatar>
             <span className="text-sm">{userData?.name}</span>
           </div>

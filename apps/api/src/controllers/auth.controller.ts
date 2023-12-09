@@ -251,6 +251,7 @@ const oAuth = async (
 				user = await userModel.create({
 					name: profile.name,
 					email: profile.email,
+					photo: profile.avatar_url,
 					password: '',
 					passwordConfirm: '',
 					verified: true,

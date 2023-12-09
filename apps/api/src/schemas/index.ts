@@ -89,6 +89,7 @@ const typeDefs = `#graphql
     name: String!
     email: String!
     role: String!
+    photo: String
     createdAt: DateTime
     updatedAt: DateTime
   }

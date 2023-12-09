@@ -9,6 +9,8 @@ export interface IFile extends Document {
 		userId: string
 		role: string
 	}[]
+	createdAt: Date
+	updatedAt: Date
 }
 
 // Define the user schema
@@ -39,8 +41,8 @@ const fileSchema = new Schema(
 				},
 			},
 		],
-	}
-	// { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+	},
+	{ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 )
 
 // Create the file model

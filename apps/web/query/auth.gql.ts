@@ -32,6 +32,7 @@ export const GET_ME_QUERY = gql(/* GraphQL */ `
       user {
         createdAt
         email
+        photo
         id
         name
         updatedAt

@@ -158,6 +158,7 @@ var typeDefs = `#graphql
     name: String!
     email: String!
     role: String!
+    photo: String
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -176,6 +177,10 @@ var userSchema = new import_mongoose.Schema(
     name: {
       type: String,
       required: true
+    },
+    photo: {
+      type: String,
+      required: false
     },
     email: {
       type: String,
@@ -472,6 +477,7 @@ var oAuth = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
         user = yield user_default.create({
           name: profile.name,
           email: profile.email,
+          photo: profile.avatar_url,
           password: "",
           passwordConfirm: "",
           verified: true
@@ -603,8 +609,8 @@ var fileSchema = new import_mongoose2.Schema(
         }
       }
     ]
-  }
-  // { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+  },
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 var fileModel = import_mongoose2.default.model("File", fileSchema);
 var file_default = fileModel;
