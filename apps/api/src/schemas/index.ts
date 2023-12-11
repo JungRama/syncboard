@@ -10,6 +10,7 @@ const typeDefs = `#graphql
 
     # Files
     getFiles(search: String): [File]!
+    getFileById(id: String!): File!
   }
 
   type Mutation {

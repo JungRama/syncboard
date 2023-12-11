@@ -1,9 +1,12 @@
 export const initialName = (name: string) => {
   let words = name.split(' ');
   if (words.length > 1) {
-    return words[0].charAt(0) + words[1].charAt(0);
+    const initial = words[0].charAt(0) + words[1].charAt(0);
+    return initial.toUpperCase();
   } else {
-    return words[0].charAt(0);
+    const initial =
+      words[0].charAt(0) + words[0].charAt(1) ?? words[0].charAt(0);
+    return initial.toUpperCase();
   }
 };
 

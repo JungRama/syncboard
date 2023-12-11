@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "tsup --watch --onSuccess \"node dist/server.js\"",
+    "ws": "node ./node_modules/y-websocket/bin/server.js",
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,7 +30,8 @@
     "redis": "^4.6.10",
     "underscore": "^1.13.6",
     "validator": "^13.11.0",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "y-websocket": "^1.5.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

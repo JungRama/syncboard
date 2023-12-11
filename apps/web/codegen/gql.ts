@@ -17,9 +17,12 @@ const documents = {
     "\n  mutation SignUp($input: SignUpInput!) {\n    signupUser(input: $input) {\n      status\n    }\n  }\n": types.SignUpDocument,
     "\n  mutation OAuth($input: OAuthInput!) {\n    oAuth(input: $input) {\n      access_token\n      refresh_token\n    }\n  }\n": types.OAuthDocument,
     "\n  query GetMe {\n    getMe {\n      user {\n        createdAt\n        email\n        photo\n        id\n        name\n        updatedAt\n      }\n    }\n  }\n": types.GetMeDocument,
+    "\n  query RefreshAccessToken($refreshAccessToken: String!) {\n    refreshAccessToken(refresh_token: $refreshAccessToken) {\n      access_token\n      refresh_token\n    }\n  }\n": types.RefreshAccessTokenDocument,
     "\n  query Logout {\n    logoutUser\n  }\n": types.LogoutDocument,
-    "\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n": types.GetFilesDocument,
+    "\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      id\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n": types.GetFilesDocument,
+    "\n  query GetFileById($id: String!) {\n    getFileById(id: $id) {\n      id\n      name\n      thumbnail\n      updatedAt\n      whiteboard\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n": types.GetFileByIdDocument,
     "\n  mutation CreateFile {\n    createFile {\n      id\n    }\n  }\n": types.CreateFileDocument,
+    "\n  mutation UpdateFile($input: UpdateFileInput!) {\n    updateFile(input: $input) {\n      id\n    }\n  }\n": types.UpdateFileDocument,
 };
 
 /**
@@ -55,15 +58,27 @@ export function gql(source: "\n  query GetMe {\n    getMe {\n      user {\n     
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "\n  query RefreshAccessToken($refreshAccessToken: String!) {\n    refreshAccessToken(refresh_token: $refreshAccessToken) {\n      access_token\n      refresh_token\n    }\n  }\n"): (typeof documents)["\n  query RefreshAccessToken($refreshAccessToken: String!) {\n    refreshAccessToken(refresh_token: $refreshAccessToken) {\n      access_token\n      refresh_token\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "\n  query Logout {\n    logoutUser\n  }\n"): (typeof documents)["\n  query Logout {\n    logoutUser\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      id\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetFiles($search: String) {\n    getFiles(search: $search) {\n      id\n      name\n      thumbnail\n      updatedAt\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetFileById($id: String!) {\n    getFileById(id: $id) {\n      id\n      name\n      thumbnail\n      updatedAt\n      whiteboard\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetFileById($id: String!) {\n    getFileById(id: $id) {\n      id\n      name\n      thumbnail\n      updatedAt\n      whiteboard\n      userAccess {\n        userId {\n          _id\n          name\n          photo\n        }\n        role\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation CreateFile {\n    createFile {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation CreateFile {\n    createFile {\n      id\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateFile($input: UpdateFileInput!) {\n    updateFile(input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateFile($input: UpdateFileInput!) {\n    updateFile(input: $input) {\n      id\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

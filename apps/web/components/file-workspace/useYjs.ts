@@ -19,17 +19,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { YKeyValue } from 'y-utility/y-keyvalue';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
+import { record } from 'zod';
 // import { DEFAULT_STORE } from './default_store'
 
 export function useYjsStore({
   roomId = 'example',
   hostUrl = 'ws://localhost:1234',
+  defaultWhiteboard = null,
   shapeUtils = [],
   onUpdate,
 }: Partial<{
   hostUrl: string;
   roomId: string;
   version: number;
+  defaultWhiteboard?: string | null;
   onUpdate: (store: TLStore) => void;
   shapeUtils: TLAnyShapeUtilConstructor[];
 }>) {
@@ -112,7 +115,11 @@ export function useYjsStore({
         >,
         transaction: Y.Transaction,
       ) => {
-        if (transaction.local) return;
+        if (transaction.local) {
+          if (onUpdate) {
+            onUpdate(store);
+          }
+        }
 
         const toRemove: TLRecord['id'][] = [];
         const toPut: TLRecord[] = [];
@@ -138,10 +145,6 @@ export function useYjsStore({
           if (toRemove.length) store.remove(toRemove);
           if (toPut.length) store.put(toPut);
         });
-
-        if (onUpdate) {
-          onUpdate(store);
-        }
       };
 
       yStore.on('change', handleChange);
@@ -236,16 +239,27 @@ export function useYjsStore({
       // is empty, initialize the yjs doc with the default store records.
       if (yStore.yarray.length) {
         // Replace the store records with the yjs doc records
+
         transact(() => {
           // The records here should be compatible with what's in the store
           store.clear();
           const records = yStore.yarray.toJSON().map(({ val }) => val);
           store.put(records);
+          store.put(records);
+        });
+      }
+      // fallback to database mongo if no data -> in case something happen
+      else if (defaultWhiteboard) {
+        transact(() => {
+          store.clear();
+          store.loadSnapshot(JSON.parse(defaultWhiteboard));
         });
       } else {
         // Create the initial store records
         // Sync the store records to the yjs doc
         yDoc.transact(() => {
+          console.log(store.allRecords());
+
           for (const record of store.allRecords()) {
             yStore.set(record.id, record);
           }
@@ -294,8 +308,6 @@ export function useYjsStore({
       unsubs.length = 0;
     };
   }, [room, yDoc, store, yStore]);
-
-  console.log(storeWithStatus);
 
   return storeWithStatus;
 }

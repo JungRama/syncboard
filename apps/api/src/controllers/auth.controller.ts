@@ -138,6 +138,7 @@ const login = async (
 			.select('+password +verified')
 
 		if (
+			!password ||
 			!user ||
 			!(await user.comparePasswords(password, user.password ?? ''))
 		) {

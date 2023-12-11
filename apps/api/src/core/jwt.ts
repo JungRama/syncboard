@@ -1,5 +1,5 @@
-import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
-import errorHandler from "~/controllers/error.controller";
+import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken'
+import errorHandler from '~/controllers/error.controller'
 
 /**
  * Signs a JSON Web Token (JWT) using the provided payload, key, and options.
@@ -9,18 +9,18 @@ import errorHandler from "~/controllers/error.controller";
  * @returns The signed JWT.
  */
 export const signJwt = (
-  payload: JwtPayload,
-  Key: string,
-  options: SignOptions
+	payload: JwtPayload,
+	Key: string,
+	options: SignOptions
 ) => {
-  // Retrieve the secret key from the environment variables
-  const keySecret = process.env[Key] ?? "SECRET";
+	// Retrieve the secret key from the environment variables
+	const keySecret = process.env[Key] ?? 'SECRET'
 
-  // Sign the JWT using the payload, private key, and options
-  return jwt.sign(payload, keySecret, {
-    ...(options && options),
-  });
-};
+	// Sign the JWT using the payload, private key, and options
+	return jwt.sign(payload, keySecret, {
+		...(options && options),
+	})
+}
 
 /**
  * Verifies a JSON Web Token (JWT) using the provided token and key.
@@ -29,20 +29,15 @@ export const signJwt = (
  * @returns The decoded payload of the verified JWT.
  */
 export const verifyJwt = (token: string, Key: string) => {
-  try {
-    // Retrieve the secret key from the environment variables
-    const keySecret = process.env[Key] ?? "SECRET";
+	// Retrieve the secret key from the environment variables
+	const keySecret = process.env[Key] ?? 'SECRET'
 
-    // Verify the JWT using the token and public key
-    const decoded = jwt.verify(token, keySecret);
+	// Verify the JWT using the token and public key
+	const decoded = jwt.verify(token, keySecret)
 
-    return decoded as {
-      user: string;
-      iat: number;
-      exp: number;
-    };
-  } catch (error) {
-    // Handle any errors that occur during verification
-    errorHandler(error);
-  }
-};
+	return decoded as {
+		user: string
+		iat: number
+		exp: number
+	}
+}

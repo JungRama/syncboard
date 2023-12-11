@@ -13,6 +13,7 @@ import {
 import { setUser } from '@/store/user.store';
 import { useRouter } from 'next/navigation';
 import { initialName, userProfile } from '@/utils/user-profile.utils';
+import { clearAllCredentials } from '@/utils/user-credentials.utils';
 
 export default function Profile() {
   const userData = useSelector((state: RootState) => state.user?.user);
@@ -22,10 +23,8 @@ export default function Profile() {
 
   const logoutAction = () => {
     logout();
-    removeAccessToken();
-    removeRefreshToken();
+    clearAllCredentials('/auth');
     dispatch(setUser(null));
-    window.location.href = '/auth';
   };
 
   return (

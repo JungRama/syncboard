@@ -12,7 +12,7 @@ import Image from 'next/image';
 
 export default function AuthPage() {
   return (
-    <div className='bg-[url("/white-gradient.webp")]'>
+    <div className='bg-[url("/white-gradient.webp")] bg-cover'>
       <div className="container">
         <div className="flex min-h-[100vh] items-center justify-center gap-[15px] py-5 lg:gap-[30px]">
           <div className="col-span-12 flex flex-col items-center gap-4 md:col-span-6 lg:col-span-4">

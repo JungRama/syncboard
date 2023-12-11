@@ -3,25 +3,58 @@ import {
   InMemoryCache,
   HttpLink,
   ApolloLink,
+  Observable,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { getAccessToken } from './cookie-service.utils';
+import {
+  getAccessToken,
+  getRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+} from './cookie-service.utils';
+import { clearAllCredentials } from './user-credentials.utils';
+import { REFRESH_TOKEN_QUERY } from '@/query/auth.gql';
 
 const httpLink = new HttpLink({
   uri: 'http://localhost:4000/graphql',
 });
 
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors)
-    graphQLErrors.forEach(({ message, locations, path }) => {
-      console.log(
-        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
-      );
-    });
+const errorLink = onError(
+  ({ graphQLErrors, networkError, operation, forward }) => {
+    if (operation.operationName === 'RefreshAccessToken') {
+      return clearAllCredentials('/auth');
+    } else if (graphQLErrors)
+      graphQLErrors.forEach((error) => {
+        if (error.extensions.code === 'UNAUTHENTICATED') {
+          const observable = new Observable((observer) => {
+            (async () => {
+              const accessToken = await refreshToken();
 
-  if (networkError) console.log(`[Network error]: ${networkError}`);
-});
+              if (!accessToken) {
+                return clearAllCredentials('/auth');
+              }
+
+              // Retry the failed request
+              const subscriber = {
+                next: observer.next.bind(observer),
+                error: observer.error.bind(observer),
+                complete: observer.complete.bind(observer),
+              };
+
+              forward(operation).subscribe(subscriber);
+            })();
+          }).subscribe((val) => {
+            return val;
+          });
+
+          return observable;
+        }
+      });
+
+    if (networkError) console.log(`[Network error]: ${networkError}`);
+  },
+);
 
 const authLink = setContext((_, { headers }) => {
   const token = getAccessToken();
@@ -32,6 +65,24 @@ const authLink = setContext((_, { headers }) => {
     },
   };
 });
+
+const refreshToken = async () => {
+  const response = await client.query({
+    query: REFRESH_TOKEN_QUERY,
+    variables: {
+      refreshAccessToken: getRefreshToken(),
+    },
+  });
+
+  const token = response.data.refreshAccessToken;
+
+  if (token) {
+    setAccessToken(token.access_token);
+    setRefreshToken(token.refresh_token);
+  }
+
+  return token;
+};
 
 const client = new ApolloClient({
   link: ApolloLink.from([errorLink, authLink, httpLink]),

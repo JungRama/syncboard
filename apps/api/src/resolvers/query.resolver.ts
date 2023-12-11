@@ -9,4 +9,5 @@ export default {
 	logoutUser: authController.logout,
 	// Files
 	getFiles: filesController.get,
+	getFileById: filesController.getById,
 }

@@ -8,6 +8,7 @@ import {
   menuItem,
   track,
   useEditor,
+  TLStore,
 } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import { useRouter } from 'next/navigation';
@@ -15,9 +16,11 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useYjsStore } from './useYjs';
 import _ from 'underscore';
+import { mutateUpdateFile } from '@/services/file.service';
 
-export default function Whiteboard() {
+export default function Whiteboard({ roomId, defaultValue }) {
   const router = useRouter();
+  const [updateFile] = mutateUpdateFile();
 
   const overideUI: TLUiOverrides = {
     menu(_editor, menu) {
@@ -37,14 +40,41 @@ export default function Whiteboard() {
   };
 
   const store = useYjsStore({
-    roomId: 'example17',
+    roomId: roomId,
     hostUrl: 'ws://localhost:1234',
-    onUpdate: _.debounce((store) => {
-      console.log(JSON.stringify(store.getSnapshot()));
+    defaultWhiteboard: defaultValue,
+    onUpdate: _.debounce((store: TLStore) => {
+      console.log(store.getSnapshot());
+
+      updateFile({
+        variables: {
+          input: {
+            id: roomId,
+            whiteboard: JSON.stringify(store.getSnapshot()),
+          },
+        },
+      });
     }, 3000),
   });
 
-  return <Tldraw overrides={overideUI} autoFocus store={store} />;
+  const handleEvent = (name, data) => {
+    console.log(name, data);
+  };
+
+  return (
+    <>
+      {/* <NameEditor></NameEditor> */}
+      <Tldraw
+        // acceptedImageMimeTypes={['null']}
+        // acceptedVideoMimeTypes={['null']}
+        // maxAssetSize={100}
+        overrides={overideUI}
+        autoFocus
+        store={store}
+        onUiEvent={handleEvent}
+      />
+    </>
+  );
 }
 
 const NameEditor = track(() => {

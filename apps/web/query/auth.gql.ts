@@ -41,6 +41,15 @@ export const GET_ME_QUERY = gql(/* GraphQL */ `
   }
 `);
 
+export const REFRESH_TOKEN_QUERY = gql(/* GraphQL */ `
+  query RefreshAccessToken($refreshAccessToken: String!) {
+    refreshAccessToken(refresh_token: $refreshAccessToken) {
+      access_token
+      refresh_token
+    }
+  }
+`);
+
 export const LOGOUT_QUERY = gql(/* GraphQL */ `
   query Logout {
     logoutUser

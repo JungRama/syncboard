@@ -1,15 +1,17 @@
-import useFileService from '@/services/file.service';
+'use client';
+
+import { mutateCreateFile } from '@/services/file.service';
 import { Button } from '@ui/components/ui/button';
-import { Grid, List, Menu } from 'lucide-react';
+import { Grid, List, Loader, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function FileHeader() {
   const router = useRouter();
-  const { mutateCreateFile, loadingCreateFile, errorCreateFile } =
-    useFileService();
-  const createWorkspace = async () => {
-    const createFile = await mutateCreateFile();
-    const fileId = createFile.data?.createFile.id;
+  const [createFile, { loading }] = mutateCreateFile();
+
+  const createNewFile = async () => {
+    const response = await createFile();
+    const fileId = response.data?.createFile.id;
 
     if (fileId) {
       router.push(`/files/${fileId}`);
@@ -25,7 +27,9 @@ export default function FileHeader() {
       </div>
 
       <div className="flex justify-end gap-1">
-        <Button onClick={createWorkspace}>+ Workspace</Button>
+        <Button onClick={createNewFile}>
+          {loading && <Loader className="h-4 animate-spin"></Loader>} + Files
+        </Button>
 
         <Button className="hidden px-2 md:block" variant="secondary">
           <Grid className="h-5" />

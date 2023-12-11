@@ -79,6 +79,7 @@ var typeDefs = `#graphql
 
     # Files
     getFiles(search: String): [File]!
+    getFileById(id: String!): File!
   }
 
   type Mutation {
@@ -316,30 +317,23 @@ var signJwt = (payload, Key, options) => {
 };
 var verifyJwt = (token, Key) => {
   var _a;
-  try {
-    const keySecret = (_a = process.env[Key]) != null ? _a : "SECRET";
-    const decoded = import_jsonwebtoken.default.verify(token, keySecret);
-    return decoded;
-  } catch (error) {
-    error_controller_default(error);
-  }
+  const keySecret = (_a = process.env[Key]) != null ? _a : "SECRET";
+  const decoded = import_jsonwebtoken.default.verify(token, keySecret);
+  return decoded;
 };
 
 // src/middleware/check-auth.ts
 var import_graphql2 = require("graphql");
 var checkAuth = (req, userAuth2) => __async(void 0, null, function* () {
-  try {
-    const authUser = yield userAuth2(req);
-    if (!authUser) {
-      throw new import_graphql2.GraphQLError("You are not logged in", {
-        extensions: {
-          code: "AUTHENTICATION_ERROR"
-        }
-      });
-    }
-  } catch (error) {
-    error_controller_default(error);
+  const authUser = yield userAuth2(req);
+  if (!authUser) {
+    throw new import_graphql2.GraphQLError("You are not logged in", {
+      extensions: {
+        code: "UNAUTHENTICATED"
+      }
+    });
   }
+  return authUser;
 });
 var check_auth_default = checkAuth;
 
@@ -400,7 +394,7 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
   var _a;
   try {
     const user = yield user_default.findOne({ email }).select("+password +verified");
-    if (!user || !(yield user.comparePasswords(password, (_a = user.password) != null ? _a : ""))) {
+    if (!password || !user || !(yield user.comparePasswords(password, (_a = user.password) != null ? _a : ""))) {
       throw new import_graphql3.GraphQLError("Invalid email or password", {
         extensions: {
           code: "AUTHENTICATION_ERROR"
@@ -618,9 +612,7 @@ var file_default = fileModel;
 // src/controllers/files.controller.ts
 var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { search }, { req, userAuth: userAuth2 }) {
   try {
-    const user = yield userAuth2(req);
-    if (!user)
-      throw new Error("User not found");
+    const user = yield check_auth_default(req, userAuth2);
     const query = {
       "userAccess.userId": user == null ? void 0 : user._id
     };
@@ -633,14 +625,24 @@ var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { sea
       path: "userAccess.userId",
       model: "User",
       select: "name photo"
-      // populate: {
-      // 	path: 'components',
-      // 	model: 'Component'
-      // }
-      // Get friends of friends - populate the 'friends' array for every friend
-      // populate: { path: 'friends' }
     });
-    console.log(JSON.stringify(files, null, 2));
+    return files;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var getById = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { id }, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    const query = {
+      // 'userAccess.userId': user?._id,
+      _id: id
+    };
+    const files = yield file_default.findOne(query).populate({
+      path: "userAccess.userId",
+      model: "User",
+      select: "name photo"
+    });
     return files;
   } catch (error) {
     error_controller_default(error);
@@ -648,10 +650,7 @@ var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { sea
 });
 var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
   try {
-    yield check_auth_default(req, userAuth2);
-    const user = yield userAuth2(req);
-    if (!user)
-      throw new Error("User not found");
+    const user = yield check_auth_default(req, userAuth2);
     const file = yield file_default.create({
       name: "Untitled File",
       thumbnail: null,
@@ -692,6 +691,7 @@ var del = () => {
 };
 var files_controller_default = {
   get,
+  getById,
   create,
   update,
   del
@@ -714,7 +714,8 @@ var query_resolver_default = {
   refreshAccessToken: auth_controller_default.refreshAccessToken,
   logoutUser: auth_controller_default.logout,
   // Files
-  getFiles: files_controller_default.get
+  getFiles: files_controller_default.get,
+  getFileById: files_controller_default.getById
 };
 
 // src/server.ts
@@ -790,7 +791,7 @@ var userAuth = (req) => __async(void 0, null, function* () {
     }
     return user;
   } catch (error) {
-    error_controller_default(error);
+    return false;
   }
 });
 var user_auth_default = userAuth;

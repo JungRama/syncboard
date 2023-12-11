@@ -20,9 +20,7 @@ const get = async (
 	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
 ) => {
 	try {
-		const user = await userAuth(req)
-
-		if (!user) throw new Error('User not found')
+		const user = await checkAuth(req, userAuth)
 
 		const query = {
 			'userAccess.userId': user?._id,
@@ -38,29 +36,32 @@ const get = async (
 			path: 'userAccess.userId',
 			model: 'User',
 			select: 'name photo',
-
-			// populate: {
-			// 	path: 'components',
-			// 	model: 'Component'
-			// }
-			// Get friends of friends - populate the 'friends' array for every friend
-			// populate: { path: 'friends' }
 		})
-		// files.populate({
-		// });
-		// const t =  fileModel.aggregate([
-		// 	{
-		// 		$lookup: {
-		// 			from: 'users', // Replace with your users collection name
-		// 			localField: 'userAccess.userId', // Field from the current documents
-		// 			foreignField: 'userId', // Corresponding field from the users collection
-		// 			as: 'userDetails', // Name of the new field to add with joined data
-		// 		},
-		// 	},
-		// 	// Additional stages like $unwind or $project can be added as needed
-		// ])
 
-		console.log(JSON.stringify(files, null, 2))
+		return files
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const getById = async (
+	parent: any,
+	{ id }: { id: string },
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		const query = {
+			// 'userAccess.userId': user?._id,
+			_id: id,
+		}
+
+		const files = await fileModel.findOne(query).populate({
+			path: 'userAccess.userId',
+			model: 'User',
+			select: 'name photo',
+		})
 
 		return files
 	} catch (error) {
@@ -75,9 +76,10 @@ const create = async (
 ) => {
 	try {
 		// Check if the user is authenticated
-		await checkAuth(req, userAuth)
-		const user = await userAuth(req)
-		if (!user) throw new Error('User not found')
+		const user = await checkAuth(req, userAuth)
+
+		// const user = await userAuth(req)
+		// if (!user) throw new Error('User not found')
 
 		const file = await fileModel.create({
 			name: 'Untitled File',
@@ -131,6 +133,7 @@ const del = () => {}
 
 export default {
 	get,
+	getById,
 	create,
 	update,
 	del,
