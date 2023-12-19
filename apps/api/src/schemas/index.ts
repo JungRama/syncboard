@@ -21,6 +21,8 @@ const typeDefs = `#graphql
 
     # Files
     createFile: File!
+    addNewUserAccess(input: NewUserAccessInput!): [UserAccess]
+    changeUserAccess(input: ChangeUserAccessInput!): [UserAccess]
     updateFile(input: UpdateFileInput!): File!
     deleteFile(input: DeleteFileInput!): Boolean
   }
@@ -53,6 +55,18 @@ const typeDefs = `#graphql
     code: String!
   }
   
+  input NewUserAccessInput {
+    id: String!
+    email: String!
+    role: String!
+  }
+
+  input ChangeUserAccessInput {
+    id: String!
+    user_id: String!
+    role: String!
+  }
+  
   type File {
     id: ID!
     name: String!
@@ -71,6 +85,7 @@ const typeDefs = `#graphql
   type UserAccessDetail {
     _id: String!
     name: String!
+    email: String!
     photo: String
   }
 

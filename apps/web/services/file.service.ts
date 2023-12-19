@@ -1,4 +1,6 @@
 import {
+  ADD_NEW_USER_ACCESS_MUTATION,
+  CHANGE_USER_ACCESS_MUTATION,
   CREATE_FILE_MUTATION,
   GET_FILES_QUERY,
   GET_FILE_BY_ID_QUERY,
@@ -6,8 +8,11 @@ import {
 } from '@/query/file.gql';
 import { useMutation, useQuery } from '@apollo/client';
 
-export const getFiles = () => {
+export const getFiles = (search: string | null) => {
   return useQuery(GET_FILES_QUERY, {
+    variables: {
+      search: search ?? undefined,
+    },
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'cache-first',
   });
@@ -27,6 +32,14 @@ export const mutateCreateFile = () => {
 
 export const mutateUpdateFile = () => {
   return useMutation(UPDATE_FILE_MUTATION);
+};
+
+export const mutateAddNewUserAccess = () => {
+  return useMutation(ADD_NEW_USER_ACCESS_MUTATION);
+};
+
+export const mutateChangeUserAccess = () => {
+  return useMutation(CHANGE_USER_ACCESS_MUTATION);
 };
 
 // export const useFileService = () => {

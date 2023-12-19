@@ -4,6 +4,11 @@ import checkAuth from '~/middleware/check-auth'
 import { UserAuthFn } from '~/middleware/user-auth'
 import fileModel from '~/models/file'
 import errorHandler from './error.controller'
+import userModel from '~/models/user'
+import { GraphQLError } from 'graphql'
+import Identicon from 'identicon.js'
+import crypto from 'crypto'
+import fs from 'fs'
 
 interface FileInputUpdate {
 	input: {
@@ -11,6 +16,15 @@ interface FileInputUpdate {
 		name?: string
 		thumbnail?: string
 		whiteboard?: string
+	}
+}
+
+interface NewUserAccessInput {
+	input: {
+		id: string
+		user_id: string
+		email: string
+		role: string
 	}
 }
 
@@ -28,15 +42,18 @@ const get = async (
 
 		if (search) {
 			Object.assign(query, {
-				name: { $regex: '.*' + search + '.*' },
+				name: { $regex: '.*' + search + '.*', $options: 'i' },
 			})
 		}
 
-		const files = await fileModel.find(query).populate({
-			path: 'userAccess.userId',
-			model: 'User',
-			select: 'name photo',
-		})
+		const files = await fileModel
+			.find(query)
+			.populate({
+				path: 'userAccess.userId',
+				model: 'User',
+				select: 'name photo email',
+			})
+			.sort({ updatedAt: -1 })
 
 		return files
 	} catch (error) {
@@ -60,10 +77,121 @@ const getById = async (
 		const files = await fileModel.findOne(query).populate({
 			path: 'userAccess.userId',
 			model: 'User',
-			select: 'name photo',
+			select: 'name photo email',
 		})
 
 		return files
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const addNewUserAccess = async (
+	parent: any,
+	{ input }: NewUserAccessInput,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		const selectedUser = await userModel.findOne({
+			email: input.email,
+		})
+
+		if (!selectedUser) {
+			throw new GraphQLError('User not found!', {
+				extensions: {
+					code: 'VALIDATION',
+				},
+			})
+		}
+
+		const file = await fileModel
+			.findOneAndUpdate(
+				{
+					_id: input.id,
+				},
+				{
+					$push: {
+						userAccess: {
+							userId: selectedUser?._id,
+							role: input.role,
+						},
+					},
+				},
+				{
+					new: true,
+				}
+			)
+			.populate({
+				path: 'userAccess.userId',
+				model: 'User',
+				select: 'name photo email',
+			})
+
+		return file?.userAccess
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const changeUserAccess = async (
+	parent: any,
+	{ input }: NewUserAccessInput,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		let file = null
+
+		if (input.role === 'REMOVE') {
+			file = await fileModel.findOneAndUpdate(
+				{
+					_id: input.id,
+				},
+				{
+					$pull: {
+						userAccess: { userId: input.user_id },
+					},
+				},
+				{
+					new: true,
+				}
+			)
+
+			console.log(input.role, input.user_id)
+		} else {
+			file = await fileModel.findOneAndUpdate(
+				{
+					_id: input.id,
+					'userAccess.userId': input.user_id,
+				},
+				{
+					$set: {
+						'userAccess.$.role': input.role,
+					},
+				},
+				{
+					new: true,
+				}
+			)
+		}
+
+		await file?.populate({
+			path: 'userAccess.userId',
+			model: 'User',
+			select: 'name photo email',
+		})
+
+		return file?.userAccess
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const updateUserAccess = async () => {
+	try {
 	} catch (error) {
 		errorHandler(error)
 	}
@@ -78,12 +206,26 @@ const create = async (
 		// Check if the user is authenticated
 		const user = await checkAuth(req, userAuth)
 
-		// const user = await userAuth(req)
-		// if (!user) throw new Error('User not found')
+		const thumbName = crypto.randomUUID()
+		const thumbnail = new Identicon(thumbName, 420)
+		const dir = 'public/storage/'
+
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir)
+		}
+
+		fs.writeFile(
+			dir + thumbName + '.png',
+			thumbnail.toString(),
+			'base64',
+			function (err) {
+				console.log(err)
+			}
+		)
 
 		const file = await fileModel.create({
 			name: 'Untitled File',
-			thumbnail: null,
+			thumbnail: thumbName + '.png',
 			whiteboard: null,
 			updatedAt: new Date(),
 			userAccess: [
@@ -108,8 +250,6 @@ const update = async (
 	try {
 		// Check if the user is authenticated
 		await checkAuth(req, userAuth)
-		const user = await userAuth(req)
-		if (!user) throw new Error('User not found')
 
 		const getInput = _.omit(args.input, _.isNull)
 
@@ -134,6 +274,8 @@ const del = () => {}
 export default {
 	get,
 	getById,
+	addNewUserAccess,
+	changeUserAccess,
 	create,
 	update,
 	del,

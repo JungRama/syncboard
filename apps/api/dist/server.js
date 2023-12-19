@@ -90,6 +90,8 @@ var typeDefs = `#graphql
 
     # Files
     createFile: File!
+    addNewUserAccess(input: NewUserAccessInput!): [UserAccess]
+    changeUserAccess(input: ChangeUserAccessInput!): [UserAccess]
     updateFile(input: UpdateFileInput!): File!
     deleteFile(input: DeleteFileInput!): Boolean
   }
@@ -122,6 +124,18 @@ var typeDefs = `#graphql
     code: String!
   }
   
+  input NewUserAccessInput {
+    id: String!
+    email: String!
+    role: String!
+  }
+
+  input ChangeUserAccessInput {
+    id: String!
+    user_id: String!
+    role: String!
+  }
+  
   type File {
     id: ID!
     name: String!
@@ -140,6 +154,7 @@ var typeDefs = `#graphql
   type UserAccessDetail {
     _id: String!
     name: String!
+    email: String!
     photo: String
   }
 
@@ -610,6 +625,10 @@ var fileModel = import_mongoose2.default.model("File", fileSchema);
 var file_default = fileModel;
 
 // src/controllers/files.controller.ts
+var import_graphql4 = require("graphql");
+var import_identicon = __toESM(require("identicon.js"));
+var import_crypto = __toESM(require("crypto"));
+var import_fs = __toESM(require("fs"));
 var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { search }, { req, userAuth: userAuth2 }) {
   try {
     const user = yield check_auth_default(req, userAuth2);
@@ -618,14 +637,14 @@ var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { sea
     };
     if (search) {
       Object.assign(query, {
-        name: { $regex: ".*" + search + ".*" }
+        name: { $regex: ".*" + search + ".*", $options: "i" }
       });
     }
     const files = yield file_default.find(query).populate({
       path: "userAccess.userId",
       model: "User",
-      select: "name photo"
-    });
+      select: "name photo email"
+    }).sort({ updatedAt: -1 });
     return files;
   } catch (error) {
     error_controller_default(error);
@@ -641,9 +660,92 @@ var getById = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, {
     const files = yield file_default.findOne(query).populate({
       path: "userAccess.userId",
       model: "User",
-      select: "name photo"
+      select: "name photo email"
     });
     return files;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var addNewUserAccess = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { input }, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    const selectedUser = yield user_default.findOne({
+      email: input.email
+    });
+    if (!selectedUser) {
+      throw new import_graphql4.GraphQLError("User not found!", {
+        extensions: {
+          code: "VALIDATION"
+        }
+      });
+    }
+    const file = yield file_default.findOneAndUpdate(
+      {
+        _id: input.id
+      },
+      {
+        $push: {
+          userAccess: {
+            userId: selectedUser == null ? void 0 : selectedUser._id,
+            role: input.role
+          }
+        }
+      },
+      {
+        new: true
+      }
+    ).populate({
+      path: "userAccess.userId",
+      model: "User",
+      select: "name photo email"
+    });
+    return file == null ? void 0 : file.userAccess;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var changeUserAccess = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { input }, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    let file = null;
+    if (input.role === "REMOVE") {
+      file = yield file_default.findOneAndUpdate(
+        {
+          _id: input.id
+        },
+        {
+          $pull: {
+            userAccess: { userId: input.user_id }
+          }
+        },
+        {
+          new: true
+        }
+      );
+      console.log(input.role, input.user_id);
+    } else {
+      file = yield file_default.findOneAndUpdate(
+        {
+          _id: input.id,
+          "userAccess.userId": input.user_id
+        },
+        {
+          $set: {
+            "userAccess.$.role": input.role
+          }
+        },
+        {
+          new: true
+        }
+      );
+    }
+    yield file == null ? void 0 : file.populate({
+      path: "userAccess.userId",
+      model: "User",
+      select: "name photo email"
+    });
+    return file == null ? void 0 : file.userAccess;
   } catch (error) {
     error_controller_default(error);
   }
@@ -651,9 +753,23 @@ var getById = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, {
 var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
   try {
     const user = yield check_auth_default(req, userAuth2);
+    const thumbName = import_crypto.default.randomUUID();
+    const thumbnail = new import_identicon.default(thumbName, 420);
+    const dir = "public/storage/";
+    if (!import_fs.default.existsSync(dir)) {
+      import_fs.default.mkdirSync(dir);
+    }
+    import_fs.default.writeFile(
+      dir + thumbName + ".png",
+      thumbnail.toString(),
+      "base64",
+      function(err) {
+        console.log(err);
+      }
+    );
     const file = yield file_default.create({
       name: "Untitled File",
-      thumbnail: null,
+      thumbnail: thumbName + ".png",
       whiteboard: null,
       updatedAt: /* @__PURE__ */ new Date(),
       userAccess: [
@@ -671,9 +787,6 @@ var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, ar
 var update = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
   try {
     yield check_auth_default(req, userAuth2);
-    const user = yield userAuth2(req);
-    if (!user)
-      throw new Error("User not found");
     const getInput = import_underscore.default.omit(args.input, import_underscore.default.isNull);
     const file = yield file_default.findByIdAndUpdate(
       args.input.id,
@@ -692,6 +805,8 @@ var del = () => {
 var files_controller_default = {
   get,
   getById,
+  addNewUserAccess,
+  changeUserAccess,
   create,
   update,
   del
@@ -699,18 +814,21 @@ var files_controller_default = {
 
 // src/resolvers/mutation.resolver.ts
 var mutation_resolver_default = {
+  // Auth User
   signupUser: auth_controller_default.signup,
   loginUser: auth_controller_default.login,
   oAuth: auth_controller_default.oAuth,
+  // Files
   createFile: files_controller_default.create,
-  updateFile: files_controller_default.update
+  updateFile: files_controller_default.update,
+  addNewUserAccess: files_controller_default.addNewUserAccess,
+  changeUserAccess: files_controller_default.changeUserAccess
 };
 
 // src/resolvers/query.resolver.ts
 var query_resolver_default = {
-  // Users
+  // Auth Users
   getMe: auth_controller_default.getMe,
-  // Auth
   refreshAccessToken: auth_controller_default.refreshAccessToken,
   logoutUser: auth_controller_default.logout,
   // Files
@@ -755,7 +873,7 @@ process.on("uncaughtException", (err) => {
 var app_default = app;
 
 // src/middleware/user-auth.ts
-var import_graphql4 = require("graphql");
+var import_graphql5 = require("graphql");
 var userAuth = (req) => __async(void 0, null, function* () {
   try {
     let access_token;
@@ -772,7 +890,7 @@ var userAuth = (req) => __async(void 0, null, function* () {
       return false;
     const session = yield redis_default.get(decoded.user);
     if (!session) {
-      throw new import_graphql4.GraphQLError("Session has expired", {
+      throw new import_graphql5.GraphQLError("Session has expired", {
         extensions: {
           code: "FORBIDDEN"
         }
@@ -780,7 +898,7 @@ var userAuth = (req) => __async(void 0, null, function* () {
     }
     const user = yield user_default.findById(JSON.parse(session).id).select("+verified");
     if (!user || !user.verified) {
-      throw new import_graphql4.GraphQLError(
+      throw new import_graphql5.GraphQLError(
         "The user belonging to this token no longer exists",
         {
           extensions: {
@@ -824,13 +942,7 @@ var resolvers = {
     app_default.get("/", (req, res) => {
       res.send('Welcome to "Collaborative Whiteboard"!');
     });
-    app_default.get(
-      "/github/callback",
-      (req, res) => auth_controller_default.oAuth({
-        req,
-        res
-      })
-    );
+    app_default.use(import_express2.default.static("public"));
     app_default.use(
       "/graphql",
       (0, import_cors.default)(),

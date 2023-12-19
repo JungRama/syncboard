@@ -12,6 +12,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Toaster } from '@ui/components/ui/toaster';
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] });
+import './index.scss';
 
 export const metadata: Metadata = {
   title: 'Create Turborepo',

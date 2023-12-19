@@ -7,6 +7,7 @@ import FileSkeleton from '@/components/skeletons/file-skeleton';
 import { useOnMountUnsafe } from '@/hook/useOnMountUnsafe';
 import { getFiles } from '@/services/file.service';
 import { Separator } from '@ui/components/ui/separator';
+import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function WorkspaceLayout({
@@ -14,7 +15,11 @@ export default function WorkspaceLayout({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const { data: dataFiles, loading: loadingFiles } = getFiles();
+  const params = useSearchParams();
+
+  const { data: dataFiles, loading: loadingFiles } = getFiles(
+    params.get('search'),
+  );
 
   return (
     <div className="flex max-h-full">

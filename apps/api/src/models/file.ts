@@ -13,8 +13,8 @@ export interface IFile extends Document {
 	updatedAt: Date
 }
 
-// Define the user schema
-const fileSchema = new Schema(
+// Define the file schema
+const fileSchema = new Schema<IFile>(
 	{
 		name: {
 			type: String,

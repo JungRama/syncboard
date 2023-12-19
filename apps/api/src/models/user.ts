@@ -19,7 +19,7 @@ export interface IUser extends Document {
 }
 
 // Define the user schema
-const userSchema = new Schema(
+const userSchema = new Schema<IUser>(
 	{
 		name: {
 			type: String,

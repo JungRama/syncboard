@@ -11,7 +11,13 @@ export default function FileItem(props) {
   return (
     <Link href={`/files/${id}`}>
       <div className="item-workspace cursor-pointer">
-        <div className="aspect-video w-full rounded-md bg-gray-300" />
+        <div className="flex aspect-video w-full items-center justify-center rounded-md bg-[#f0f0f0]">
+          <img
+            src={'http://localhost:4000/storage/' + thumbnail}
+            className="h-24"
+            alt=""
+          />
+        </div>
         <div className="flex items-center justify-between">
           <div>
             <p className="mt-2">{title ?? 'Untitled'}</p>

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Dialog,
   DialogContent,
@@ -8,40 +10,92 @@ import {
 
 import { Button } from '@ui/components/ui/button';
 import { Input } from '@ui/components/ui/input';
-import {
-  AlertCircleIcon,
-  Brain,
-  BrainCircuit,
-  HelpCircleIcon,
-  Link,
-  ShareIcon,
-  Star,
-} from 'lucide-react';
+import { AlertCircleIcon, HelpCircleIcon, Loader } from 'lucide-react';
 
-import { GetFileByIdQuery } from '@/codegen/graphql';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@ui/components/ui/select';
-import FileUserOwner from './file-user-owner';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/index.store';
-import { Label } from '@ui/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@ui/components/ui/alert';
+import { Textarea } from '@ui/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@ui/components/ui/tooltip';
-import { Textarea } from '@ui/components/ui/textarea';
+import OpenAI from 'openai';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/index.store';
+import { TLGeoShape } from '@tldraw/tldraw';
+import { formatResponse } from './snapshot';
+import { useEffect, useState } from 'react';
+import { getOpenAIKey, setOpenAIKey } from '@/utils/cookie-service.utils';
 
 export default function FileAIDialog() {
+  const editorTL = useSelector((state: RootState) => state.file.editor);
+
+  const [dialog, setDialog] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<string | null>(null);
+
+  const saveApiKeyToCookie = (value) => {
+    console.log(value, 'oakey');
+
+    setOpenAIKey(value);
+  };
+
+  useEffect(() => {
+    setApiKey(getOpenAIKey() as string);
+  }, [getOpenAIKey()]);
+
+  const buildWithAI = async () => {
+    setLoading(true);
+
+    if (!apiKey || !prompt) return;
+
+    const openai = new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content:
+            'create a a step-by-step process explaining things.{ shapes: [{type: string, // value can be ellipse, rectangle, diamond // ellipse (start/end) used to represents the start or end of a process in a flowchart // diamond (decision): Represents a decision point, required a yes/no or true/false in arrow and need to have 2 output // rectangle (process): Depicts a process step or action in the flowchart description: string, // describe step 10 - 50 char id: string, // generate random uuid }], arrows: [{ id: string, // generate random uuid start: string, // id of shape to start end: string, // id of shape to end, description: string, // describe about this arrow. this is optional, usually used when connected with diamond shape. }] } you need to provide with those JSON format',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'gpt-3.5-turbo-1106',
+      n: 1,
+      response_format: {
+        type: 'json_object',
+      },
+    });
+
+    setDialog(false);
+    setLoading(false);
+
+    console.log(completion.choices[0].message.content);
+
+    if (editorTL) {
+      editorTL?.createShapes<TLGeoShape>(
+        formatResponse(
+          editorTL,
+          JSON.parse(completion.choices[0].message.content ?? '{}'),
+        ),
+      );
+
+      editorTL?.zoomToFit();
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={setDialog} open={dialog}>
       <DialogTrigger asChild>
         <Button className="flex gap-2 ">
           ✨<p>Use AI</p>
@@ -63,7 +117,20 @@ export default function FileAIDialog() {
 
         <div className="flex items-end gap-2">
           <div className="w-full">
-            <Input placeholder="Enter OpenAI API key"></Input>
+            <Input
+              placeholder="Enter OpenAI API key"
+              value={apiKey ?? ''}
+              type={apiKey ? 'password' : 'text'}
+              autoFocus={false}
+              onFocus={(e) => (e.target.type = 'text')}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+              }}
+              onBlur={(e) => {
+                e.target.type = 'password';
+                saveApiKeyToCookie(e.target.value);
+              }}
+            ></Input>
           </div>
           <div>
             <TooltipProvider>
@@ -81,9 +148,16 @@ export default function FileAIDialog() {
           </div>
         </div>
 
-        <Textarea placeholder="Enter your prompt. example: Create a diagram that explains how HTTP/2 works."></Textarea>
+        <Textarea
+          autoFocus={true}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Enter your prompt. example: Create a diagram that explains how HTTP/2 works."
+        ></Textarea>
 
-        <Button>Generate</Button>
+        <Button onClick={buildWithAI}>
+          {loading && <Loader className="h-4 animate-spin"></Loader>}
+          {loading ? 'Good things take time...' : 'Generate'}
+        </Button>
       </DialogContent>
     </Dialog>
   );

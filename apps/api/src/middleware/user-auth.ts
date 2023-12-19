@@ -1,5 +1,4 @@
 import { GraphQLError } from 'graphql'
-import errorHandler from '~/controllers/error.controller.js'
 import userModel, { IUser } from '~/models/user'
 import redisClient from '~/core/redis'
 import { verifyJwt } from '~/core/jwt'

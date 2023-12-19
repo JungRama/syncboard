@@ -1,5 +1,4 @@
 import { GraphQLError } from 'graphql'
-import errorHandler from '../controllers/error.controller.js'
 import { UserAuthFn } from './user-auth.js'
 import { Request } from 'express'
 

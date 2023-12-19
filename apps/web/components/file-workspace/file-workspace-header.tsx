@@ -15,10 +15,14 @@ export default function FileWorkspaceHeader({
   name,
   users,
   roomId,
+  shareComponent,
+  aiComponent,
 }: {
   name: string;
   users: GetFileByIdQuery['getFileById']['userAccess'];
   roomId: string;
+  shareComponent: JSX.Element;
+  aiComponent: JSX.Element;
 }) {
   const [nameFile, setNameFile] = useState(name);
   const [updateFile, { loading }] = mutateUpdateFile();
@@ -48,6 +52,7 @@ export default function FileWorkspaceHeader({
         </Link>
         <ContentEditable
           html={nameFile}
+          disabled={loading}
           tagName="h1"
           onChange={(event) => {
             actionNameChange(event.target.value);
@@ -72,8 +77,8 @@ export default function FileWorkspaceHeader({
           })}
         </div>
 
-        <FileAIDialog></FileAIDialog>
-        <FileShareDialog users={users}></FileShareDialog>
+        {aiComponent}
+        {shareComponent}
       </div>
     </div>
   );

@@ -14,7 +14,6 @@ import app from './app'
 import userAuth, { UserAuthFn } from '~/middleware/user-auth'
 
 import { PORT } from '~/env.config'
-import authController from './controllers/auth.controller'
 
 // Create an HTTP server using Express
 const httpServer = http.createServer(app)
@@ -65,12 +64,7 @@ type Context = {
 		res.send('Welcome to "Collaborative Whiteboard"!')
 	})
 
-	app.get('/github/callback', (req, res) =>
-		authController.oAuth({
-			req,
-			res,
-		})
-	)
+	app.use(express.static('public'))
 
 	// Apply the Apollo Server middleware to the Express app
 	app.use(

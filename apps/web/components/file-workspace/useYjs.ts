@@ -245,7 +245,6 @@ export function useYjsStore({
           store.clear();
           const records = yStore.yarray.toJSON().map(({ val }) => val);
           store.put(records);
-          store.put(records);
         });
       }
       // fallback to database mongo if no data -> in case something happen

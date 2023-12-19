@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 
 const access_token_key = 'access_token';
 const refresh_token_key = 'refresh_token';
+const open_ai_api_key = 'open_ai_api_key';
 
 export const getAccessToken = () => {
   return getCookie(access_token_key);
@@ -26,4 +27,16 @@ export const setRefreshToken = (token: string | null) => {
 
 export const removeRefreshToken = () => {
   return deleteCookie(refresh_token_key);
+};
+
+export const getOpenAIKey = () => {
+  return getCookie(open_ai_api_key);
+};
+
+export const setOpenAIKey = (key: string | null) => {
+  return setCookie(open_ai_api_key, key || '');
+};
+
+export const removeOpenAIKey = () => {
+  return deleteCookie(open_ai_api_key);
 };

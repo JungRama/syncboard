@@ -1,5 +1,4 @@
 import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken'
-import errorHandler from '~/controllers/error.controller'
 
 /**
  * Signs a JSON Web Token (JWT) using the provided payload, key, and options.
