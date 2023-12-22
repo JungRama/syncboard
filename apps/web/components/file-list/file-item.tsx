@@ -50,7 +50,7 @@ export default function FileItem(props) {
       <div
         className={cn(
           'z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-white',
-          isFavorite ? 'bg-red-500' : 'bg-black',
+          isFavorite ? 'bg-red-500' : 'bg-gray-400',
           variant === 'GRID' && 'absolute right-4 top-4 ',
           variant === 'GRID' && ' opacity-0 group-hover:opacity-100',
         )}

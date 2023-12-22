@@ -1,19 +1,12 @@
 import { GraphQLError } from 'graphql'
-import userModel, { IUser } from '~/models/user'
-import redisClient from '~/core/redis'
 import errorHandler from '~/controllers/error.controller'
-import axios from 'axios'
-
-import { signJwt, verifyJwt } from '~/core/jwt'
 
 import type { Request, Response } from 'express'
 
-import {
-	JWT_ACCESS_TOKEN_EXPIRED_IN,
-	JWT_REFRESH_TOKEN_EXPIRED_IN,
-} from '~/env.config'
-import { UserAuthFn } from '~/middleware/user-auth'
 import checkAuth from '~/middleware/check-auth'
+import { UserAuthFn } from '~/middleware/user-auth'
+import authService from '~/services/auth.service'
+import { continueWithOAuth } from '~/services/oauth.service'
 
 interface SignupInput {
 	input: {
@@ -40,50 +33,20 @@ interface oAuthInput {
 	}
 }
 
-const cookieOptions = {
-	httpOnly: true,
-	sameSite: false,
-	secure: true,
-}
-
-const accessTokenCookieOptions = {
-	...cookieOptions,
-	maxAge: JWT_ACCESS_TOKEN_EXPIRED_IN * 60 * 1000,
-	expires: new Date(Date.now() + JWT_ACCESS_TOKEN_EXPIRED_IN * 60 * 1000),
-}
-
-const refreshTokenCookieOptions = {
-	...cookieOptions,
-	maxAge: JWT_REFRESH_TOKEN_EXPIRED_IN * 60 * 1000,
-	expires: new Date(Date.now() + JWT_REFRESH_TOKEN_EXPIRED_IN * 60 * 1000),
-}
-
-if (process.env.NODE_ENV === 'production') cookieOptions.secure = true
-
-/**
- * Signup function
- * @param {Object} parent - The parent object
- * @param {SignupInput} args - The input arguments
- * @param {Object} context - The context object
- * @returns {Object} - The result object
- */
 const signup = async (
-	parent: any,
+	root: any,
 	{ input: { name, email, password, passwordConfirm } }: SignupInput,
 	{ req }: { req: Request }
 ) => {
 	try {
-		const user = await userModel.create({
+		await authService.createUser({
 			name,
 			email,
 			password,
 			passwordConfirm,
 		})
 
-		return {
-			status: 'success',
-			user,
-		}
+		return true
 	} catch (error) {
 		if (error.code === 11000) {
 			throw new GraphQLError('User Already Exist', {
@@ -96,291 +59,69 @@ const signup = async (
 	}
 }
 
-/**
- * SignTokens function
- * @param {IUser} user - The user object
- * @returns {Object} - The tokens object
- */
-async function signTokens(user: IUser) {
-	// Create a Session
-	await redisClient.set(user.id, JSON.stringify(user), {
-		EX: 60 * 60,
-	})
-
-	// Create access token
-	const access_token = signJwt({ user: user.id }, 'JWT_ACCESS_PRIVATE_KEY', {
-		expiresIn: `${JWT_ACCESS_TOKEN_EXPIRED_IN}m`,
-	})
-
-	// Create refresh token
-	const refresh_token = signJwt({ user: user.id }, 'JWT_REFRESH_PRIVATE_KEY', {
-		expiresIn: `${JWT_REFRESH_TOKEN_EXPIRED_IN}m`,
-	})
-
-	return { access_token, refresh_token }
-}
-
-/**
- * Login function
- * @param {Object} parent - The parent object
- * @param {SignInInput} args - The input arguments
- * @param {Object} context - The context object
- * @returns {Object} - The result object
- */
 const login = async (
-	parent: any,
+	root: any,
 	{ input: { email, password } }: SignInInput,
-	{ req, res }: { req: Request; res: Response }
+	{ req }: { req: Request }
 ) => {
 	try {
-		const user = await userModel
-			.findOne({ email })
-			.select('+password +verified')
-
-		if (
-			!password ||
-			password === '' ||
-			!user ||
-			!(await user.comparePasswords(password, user.password ?? ''))
-		) {
-			throw new GraphQLError('Invalid email or password', {
-				extensions: {
-					code: 'AUTHENTICATION_ERROR',
-				},
-			})
-		}
-
-		if (user?.password) {
-			delete user.password
-		}
-
-		const { access_token, refresh_token } = await signTokens(user)
-
-		res.cookie('refresh_token', refresh_token, refreshTokenCookieOptions)
-		res.cookie('access_token', access_token, accessTokenCookieOptions)
-		res.cookie('logged_in', true, {
-			...accessTokenCookieOptions,
-			httpOnly: false,
+		const loginService = await authService.loginUser({
+			email,
+			password,
 		})
 
 		return {
-			status: 'success',
-			access_token,
-			refresh_token,
+			access_token: loginService?.access_token,
+			refresh_token: loginService?.refresh_token,
 		}
 	} catch (error) {
 		errorHandler(error)
 	}
 }
 
-/**
- * Retrieves the OAuth profile for the given authentication strategy and token.
- *
- * @param {string} strategy - The authentication strategy.
- * @param {string} token - The authentication token.
- * @return {Promise<object>} The profile data for the authenticated user.
- */
-const getOAuthProfile = async (strategy: string, token: string) => {
-	try {
-		let profile = null
-
-		if (strategy === 'GITHUB') {
-			profile = await axios({
-				method: 'get',
-				url: `https://api.github.com/user`,
-				headers: {
-					Authorization: 'token ' + token,
-				},
-			})
-		}
-
-		if (!profile) {
-			throw new Error('Profile not found')
-		}
-
-		return profile.data
-	} catch (error) {
-		throw new Error(error)
-	}
-}
-
-/**
- * Authenticates the user using OAuth.
- *
- * @param {any} parent - The parent object.
- * @param {oAuthInput} input - The input object containing the strategy and code.
- * @param {Request} req - The request object.
- * @param {Response} res - The response object.
- * @return {Promise<object>} The object containing the status, access token, and refresh token.
- */
 const oAuth = async (
-	parent: any,
+	root: any,
 	{ input: { strategy, code } }: oAuthInput,
-	{ req, res }: { req: Request; res: Response }
+	{ req }: { req: Request }
 ) => {
 	try {
-		if (strategy === 'GITHUB') {
-			const githubOauth = await axios.get(
-				'https://github.com/login/oauth/access_token',
-				{
-					params: {
-						client_id: process.env.GITHUB_CLIENT_ID,
-						client_secret: process.env.GITHUB_CLIENT_SECRET,
-						code: code,
-					},
-					headers: {
-						accept: 'application/json',
-					},
-				}
-			)
+		const oAuthService = await continueWithOAuth(strategy, code)
 
-			if (githubOauth.data.error) {
-				throw new GraphQLError('Github oauth error!', {
-					extensions: {
-						code: 'AUTHENTICATION_ERROR',
-					},
-				})
-			}
-
-			const profile = await getOAuthProfile(
-				'GITHUB',
-				githubOauth.data.access_token
-			)
-
-			let user = await userModel.findOne({ email: profile.email })
-
-			if (!user) {
-				user = await userModel.create({
-					name: profile.name,
-					email: profile.email,
-					photo: profile.avatar_url,
-					password: '',
-					passwordConfirm: '',
-					verified: true,
-				})
-			}
-
-			const { access_token, refresh_token } = await signTokens(user)
-
-			res.cookie('refresh_token', refresh_token, refreshTokenCookieOptions)
-			res.cookie('access_token', access_token, accessTokenCookieOptions)
-			res.cookie('logged_in', true, {
-				...accessTokenCookieOptions,
-				httpOnly: false,
-			})
-
-			return {
-				status: 'success',
-				access_token,
-				refresh_token,
-			}
-		}
-	} catch (error) {
-		errorHandler(error)
-	}
-}
-
-/**
- * Refreshes the access token.
- *
- * @param parent - The parent object.
- * @param args - The arguments passed to the function.
- * @param req - The request object.
- * @param res - The response object.
- * @returns An object containing the new access token and refresh token.
- */
-const refreshAccessToken = async (
-	parent: any,
-	args: any,
-	{ req, res }: { req: Request; res: Response }
-) => {
-	try {
-		const { refresh_token: current_refresh_token } = args
-
-		// Verify the refresh token
-		const decoded = verifyJwt(current_refresh_token, 'JWT_REFRESH_PRIVATE_KEY')
-
-		if (!decoded) {
-			throw new GraphQLError('Could not refresh access token', {
-				extensions: {
-					code: 'FORBIDDEN',
-				},
-			})
-		}
-
-		// Check if the user session exists in Redis
-		const session = await redisClient.get(decoded.user)
-
-		if (!session) {
-			throw new GraphQLError('User session has expired', {
-				extensions: {
-					code: 'FORBIDDEN',
-				},
-			})
-		}
-
-		// Find the user by the session ID and check if they are verified
-		const user = await userModel
-			.findById(JSON.parse(session)._id)
-			.select('+verified')
-
-		if (!user || !user.verified) {
-			throw new GraphQLError('Could not refresh access token', {
-				extensions: {
-					code: 'FORBIDDEN',
-				},
-			})
-		}
-
-		// Generate new access and refresh tokens
-		const { access_token, refresh_token } = await signTokens(user)
-
-		// Set the new refresh token and access token as cookies
-		res.cookie('refresh_token', refresh_token, refreshTokenCookieOptions)
-		res.cookie('access_token', access_token, accessTokenCookieOptions)
-		res.cookie('logged_in', true, {
-			...accessTokenCookieOptions,
-			httpOnly: false,
-		})
-
-		// Return the new access token and refresh token
 		return {
-			status: 'success',
-			access_token,
-			refresh_token,
+			access_token: oAuthService?.access_token,
+			refresh_token: oAuthService?.refresh_token,
 		}
 	} catch (error) {
 		errorHandler(error)
 	}
 }
 
-/**
- * Logs out the user.
- *
- * @param parent - The parent object.
- * @param args - The arguments.
- * @param req - The request object.
- * @param res - The response object.
- * @param userAuth - The user authentication function.
- * @returns A boolean indicating if the logout was successful.
- */
-const logout = async (
-	parent: any,
-	args: any,
-	{ req, res, userAuth }: { req: Request; res: Response; userAuth: UserAuthFn }
+const refreshAccessToken = async (
+	root: any,
+	{ refresh_token }: { refresh_token: string },
+	{ req }: { req: Request }
 ) => {
 	try {
-		await checkAuth(req, userAuth)
+		const refreshTokenService = await authService.refreshToken(refresh_token)
 
-		const user = await userAuth(req)
-
-		if (user) {
-			await redisClient.del(user._id.toString())
+		return {
+			access_token: refreshTokenService?.access_token,
+			refresh_token: refreshTokenService?.refresh_token,
 		}
+	} catch (error) {
+		errorHandler(error)
+	}
+}
 
-		res.cookie('access_token', '', { maxAge: -1 })
-		res.cookie('refresh_token', '', { maxAge: -1 })
-		res.cookie('logged_in', '', { maxAge: -1 })
+const logout = async (
+	root: any,
+	args: any,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		authService.logout(user)
 
 		return true
 	} catch (error) {
@@ -388,32 +129,19 @@ const logout = async (
 	}
 }
 
-/**
- * Retrieves information about the currently authenticated user.
- * @param parent - The parent object.
- * @param args - The arguments passed to the function.
- * @param req - The request object.
- * @param userAuth - The user authentication function.
- * @returns An object containing the status and the user information.
- */
 const getMe = async (
-	parent: any,
+	root: any,
 	args: any,
 	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
 ) => {
 	try {
-		// Check if the user is authenticated
-		await checkAuth(req, userAuth)
-
-		// Get the authenticated user
-		const user = await userAuth(req)
+		const user = await checkAuth(req, userAuth)
 
 		return {
 			status: 'success',
 			user,
 		}
 	} catch (error) {
-		// Handle any errors that occur
 		errorHandler(error)
 	}
 }

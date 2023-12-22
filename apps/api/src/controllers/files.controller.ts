@@ -321,7 +321,7 @@ const create = async (
 		// Check if the user is authenticated
 		const user = await checkAuth(req, userAuth)
 
-		const countFile = await fileModel.estimatedDocumentCount({
+		const countFile = await fileModel.countDocuments({
 			userAccess: {
 				$elemMatch: {
 					userId: user._id,

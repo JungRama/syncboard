@@ -1,19 +1,15 @@
 import http from 'http'
 import express from 'express'
-
 import { ApolloServer } from '@apollo/server'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 import { expressMiddleware } from '@apollo/server/express4'
 import typeDefs from './schemas/index'
 import { Mutation, Query } from './resolvers/index'
-
 import cors from 'cors'
 import connectDB from '~/core/mongoose'
-
 import app from './app'
 import userAuth, { UserAuthFn } from '~/middleware/user-auth'
-
-import { PORT } from '~/env.config'
+import { FRONT_URI, PORT } from '~/env.config'
 
 // Create an HTTP server using Express
 const httpServer = http.createServer(app)
@@ -23,14 +19,13 @@ const corsOptions = {
 	origin: [
 		'https://studio.apollographql.com',
 		`http://localhost:${PORT}`,
-		`http://localhost:3000`,
+		FRONT_URI,
 	],
 	credentials: true,
 }
 
-// Apply CORS and JSON middleware to the Express app
+// Apply CORS middleware to the Express app
 app.use(cors(corsOptions))
-app.use(express.json())
 
 // Define GraphQL resolvers
 const resolvers = {
@@ -59,12 +54,6 @@ type Context = {
 
 	// Start the Apollo Server
 	await server.start()
-
-	app.get('/', (req, res) => {
-		res.send('Welcome to "Collaborative Whiteboard"!')
-	})
-
-	app.use(express.static('public'))
 
 	// Apply the Apollo Server middleware to the Express app
 	app.use(

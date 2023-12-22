@@ -5,8 +5,6 @@ import {
   TLStore,
   TLUiOverrides,
   Tldraw,
-  createTLStore,
-  defaultShapeUtils,
   menuItem,
 } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
@@ -68,7 +66,6 @@ export default function Whiteboard({
       if (isReadOnly) {
         editorTL.updateInstanceState({ isReadonly: true });
       }
-
       editorTL.zoomToFit();
     }
   };

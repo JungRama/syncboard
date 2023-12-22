@@ -11,9 +11,7 @@ export const SIGN_IN_MUTATION = gql(/* GraphQL */ `
 
 export const SIGN_UP_MUTATION = gql(/* GraphQL */ `
   mutation SignUp($input: SignUpInput!) {
-    signupUser(input: $input) {
-      status
-    }
+    signupUser(input: $input)
   }
 `);
 

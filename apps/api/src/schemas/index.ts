@@ -17,7 +17,7 @@ const typeDefs = `#graphql
   type Mutation {
     # Auth
     loginUser(input: LoginInput!): TokenResponse!
-    signupUser(input: SignUpInput!): UserResponse!
+    signupUser(input: SignUpInput!): Boolean
     oAuth(input: OAuthInput!): TokenResponse!
 
     # Files
@@ -103,13 +103,11 @@ const typeDefs = `#graphql
   }
 
   type TokenResponse {
-    status: String!
     access_token: String!
     refresh_token: String!
   }
 
   type UserResponse {
-    status: String!
     user: UserData!
   }
 
