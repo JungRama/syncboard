@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /root/home/services-syncboard
+            cd /home/services-syncboard/htdocs/services-syncboard.jungrama.com
             git pull origin master
             git status
 
