@@ -1,0 +1,39 @@
+name: cd
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy Using ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /root/home/services-syncboard
+            git pull origin master
+            git status
+
+      - name: Install Node.js
+        run: |
+          [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+          nvm install 18.0.0
+          nvm use 18.0.0
+
+      # - name: Install Depedencies
+      #   run: |
+      #     pnpm install
+
+      - name: Build
+        run: |
+          pnpm run build
