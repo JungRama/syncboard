@@ -10,7 +10,8 @@ const typeDefs = `#graphql
 
     # Files
     getFiles(search: String): [File]!
-    getFileById(id: String!): File!
+    getFileById(id: String!, isPublic: Boolean!): File!
+    getFavorites: [File]!
   }
 
   type Mutation {
@@ -23,6 +24,8 @@ const typeDefs = `#graphql
     createFile: File!
     addNewUserAccess(input: NewUserAccessInput!): [UserAccess]
     changeUserAccess(input: ChangeUserAccessInput!): [UserAccess]
+    toogleFavorite(input: ToogleFavoriteInput!): [File]
+    toogleIsPublic(input: ToogleIsPublicInput!): Boolean!
     updateFile(input: UpdateFileInput!): File!
     deleteFile(input: DeleteFileInput!): Boolean
   }
@@ -66,10 +69,20 @@ const typeDefs = `#graphql
     user_id: String!
     role: String!
   }
+
+  input ToogleFavoriteInput{
+    id: String!
+  }
+
+  input ToogleIsPublicInput {
+    id: String!
+    value: Boolean!
+  }
   
   type File {
     id: ID!
     name: String!
+    isPublic: Boolean
     thumbnail: String
     whiteboard: String
     userAccess: [UserAccess!]!

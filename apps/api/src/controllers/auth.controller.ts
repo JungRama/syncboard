@@ -139,6 +139,7 @@ const login = async (
 
 		if (
 			!password ||
+			password === '' ||
 			!user ||
 			!(await user.comparePasswords(password, user.password ?? ''))
 		) {

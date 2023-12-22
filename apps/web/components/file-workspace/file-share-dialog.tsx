@@ -14,6 +14,7 @@ import { GetFileByIdQuery } from '@/codegen/graphql';
 import {
   mutateAddNewUserAccess,
   mutateChangeUserAccess,
+  mutateToogleIsPublic,
 } from '@/services/file.service';
 import { RootState } from '@/store/index.store';
 import {
@@ -29,9 +30,10 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@ui/components/ui/form';
+
+import { Switch } from '@ui/components/ui/switch';
 
 import { useToast } from '@ui/components/ui/use-toast';
 import { useEffect, useState } from 'react';
@@ -41,15 +43,20 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { addNewUserValidationSchema } from '@/validations/file.validation';
+import { Label } from '@ui/components/ui/label';
 
 export default function FileShareDialog({
   roomId,
   users,
+  isPublic,
   onUserAccessChange,
+  onIsPublicChange,
 }: {
   roomId: string;
   users: GetFileByIdQuery['getFileById']['userAccess'];
+  isPublic: boolean;
   onUserAccessChange: (users: any) => void;
+  onIsPublicChange: (value: boolean) => void;
 }) {
   const { toast } = useToast();
 
@@ -64,6 +71,7 @@ export default function FileShareDialog({
   const [addNewUserAccess, { loading, error }] = mutateAddNewUserAccess();
   const [changeUserAccess, { loading: loadingChangeUserAccess }] =
     mutateChangeUserAccess();
+  const [toogleIsPublic] = mutateToogleIsPublic();
 
   const formHandler = useForm<z.infer<typeof addNewUserValidationSchema>>({
     resolver: zodResolver(addNewUserValidationSchema),
@@ -138,6 +146,26 @@ export default function FileShareDialog({
     setIdUserChange(null);
   };
 
+  const submitIsPublicToogle = async (value: boolean) => {
+    toogleIsPublic({
+      variables: {
+        input: {
+          id: roomId,
+          value,
+        },
+      },
+    });
+    onIsPublicChange(value);
+  };
+
+  const copyLinkPublic = () => {
+    navigator.clipboard.writeText(window.location.origin + '/public/' + roomId);
+
+    toast({
+      title: 'Copied to clipboard',
+    });
+  };
+
   return (
     <Dialog open={dialog} onOpenChange={setDialog}>
       <DialogTrigger asChild>
@@ -151,56 +179,60 @@ export default function FileShareDialog({
           <DialogTitle>Share File</DialogTitle>
         </DialogHeader>
         <div>
-          <Form {...formHandler}>
-            <form
-              onSubmit={formHandler.handleSubmit(submitNewUserAccess)}
-              className="flex gap-2"
-            >
-              <FormField
-                control={formHandler.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormControl>
-                      <Input placeholder="johndoe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          {isCurrentUserFileOwner && (
+            <>
+              <Form {...formHandler}>
+                <form
+                  onSubmit={formHandler.handleSubmit(submitNewUserAccess)}
+                  className="flex flex-col gap-2 md:flex-row"
+                >
+                  <FormField
+                    control={formHandler.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <Input placeholder="johndoe@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={formHandler.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="VIEW">Can View</SelectItem>
-                          <SelectItem value="EDIT">Can Edit</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={formHandler.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="VIEW">Can View</SelectItem>
+                              <SelectItem value="EDIT">Can Edit</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <Button disabled={loading} type="submit">
-                {loading && <Loader className="h-4 animate-spin"></Loader>}
-                Invite
-              </Button>
-            </form>
-          </Form>
+                  <Button disabled={loading} type="submit">
+                    {loading && <Loader className="h-4 animate-spin"></Loader>}
+                    Invite
+                  </Button>
+                </form>
+              </Form>
+              <hr className="mt-5 border-gray-200" />
+            </>
+          )}
         </div>
-        <hr className="border-gray-200" />
         <div className="flex max-h-[250px] flex-col gap-3 overflow-y-auto ">
           {users.map((item) => {
             const user = item.userId;
@@ -261,8 +293,28 @@ export default function FileShareDialog({
           })}
         </div>
         <hr className="border-gray-200" />
-        <div className="flex w-[90px] cursor-pointer text-xs font-medium text-blue-700">
-          <Link className="h-4"></Link> Copy Link
+        <div className="flex w-full items-center justify-between text-xs font-medium ">
+          <div>
+            {isPublic && (
+              <div
+                className="text-md flex cursor-pointer items-center text-blue-500"
+                onClick={copyLinkPublic}
+              >
+                <Link className="h-4"></Link>Copy public link
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <Switch
+              defaultChecked={isPublic}
+              id="open-for-public"
+              disabled={!isCurrentUserFileOwner}
+              onCheckedChange={(checked) => submitIsPublicToogle(checked)}
+            />
+            <Label htmlFor="open-for-public text-right">
+              Open view for public
+            </Label>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

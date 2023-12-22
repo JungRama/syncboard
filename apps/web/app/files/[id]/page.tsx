@@ -16,11 +16,12 @@ export default function Page({ params }): JSX.Element {
   const { id: roomId } = params;
   const userData = useSelector((state: RootState) => state.user?.user);
 
-  const getData = getFileById(roomId);
+  const getData = getFileById(roomId, false);
   const dataFile = getData.data?.getFileById;
   const [users, setUsers] = useState(dataFile?.userAccess);
   const [isUserHaveAccess, setIsUserHaveAccess] = useState(false);
   const [isUserReadOnly, setIsUserReadOnly] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
 
   useEffect(() => {
     if (!getData.loading) {
@@ -33,6 +34,8 @@ export default function Page({ params }): JSX.Element {
       setIsUserReadOnly(checkCurrentUserAccess?.role === 'VIEW');
 
       setUsers(usersAccess);
+
+      setIsPublic(dataFile?.isPublic ?? false);
 
       setIsUserHaveAccess(() => {
         return checkCurrentUserHaveAccess;
@@ -56,6 +59,7 @@ export default function Page({ params }): JSX.Element {
     <div className="h-[100vh]">
       <div className="z-20">
         <FileWorkspaceHeader
+          isReadOnly={isUserReadOnly}
           name={dataFile?.name ?? ''}
           users={users ?? []}
           roomId={roomId}
@@ -63,7 +67,9 @@ export default function Page({ params }): JSX.Element {
             <FileShareDialog
               roomId={roomId}
               users={users ?? []}
+              isPublic={isPublic}
               onUserAccessChange={(updatedUsers) => setUsers(updatedUsers)}
+              onIsPublicChange={(val) => setIsPublic(val)}
             ></FileShareDialog>
           }
           aiComponent={<FileAIDialog></FileAIDialog>}

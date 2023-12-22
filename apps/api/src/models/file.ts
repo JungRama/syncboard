@@ -4,10 +4,14 @@ import mongoose, { Document, Schema } from 'mongoose'
 export interface IFile extends Document {
 	name: string
 	thumbnail?: string
+	isPublic?: boolean
 	whiteboard: string
 	userAccess: {
 		userId: string
 		role: string
+	}[]
+	favoriteBy: {
+		userId: string
 	}[]
 	createdAt: Date
 	updatedAt: Date
@@ -24,6 +28,10 @@ const fileSchema = new Schema<IFile>(
 			type: String,
 			required: false,
 		},
+		isPublic: {
+			type: Boolean,
+			default: false,
+		},
 		whiteboard: {
 			type: String,
 			required: false,
@@ -37,6 +45,15 @@ const fileSchema = new Schema<IFile>(
 				},
 				role: {
 					type: String,
+					required: true,
+				},
+			},
+		],
+		favoriteBy: [
+			{
+				userId: {
+					type: Schema.Types.ObjectId,
+					ref: 'User',
 					required: true,
 				},
 			},

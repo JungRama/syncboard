@@ -28,6 +28,19 @@ interface NewUserAccessInput {
 	}
 }
 
+interface toogleFavoriteInput {
+	input: {
+		id: string
+	}
+}
+
+interface toogleIsPublicInput {
+	input: {
+		id: string
+		value: string
+	}
+}
+
 const get = async (
 	parent: any,
 	{ search }: { search: string },
@@ -63,15 +76,25 @@ const get = async (
 
 const getById = async (
 	parent: any,
-	{ id }: { id: string },
+	{ id, isPublic }: { id: string; isPublic: boolean },
 	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
 ) => {
 	try {
-		const user = await checkAuth(req, userAuth)
+		let user,
+			query = null
 
-		const query = {
-			// 'userAccess.userId': user?._id,
-			_id: id,
+		if (!isPublic) {
+			user = await checkAuth(req, userAuth)
+
+			query = {
+				'userAccess.userId': user?._id,
+				_id: id,
+			}
+		} else {
+			query = {
+				_id: id,
+				isPublic: true,
+			}
 		}
 
 		const files = await fileModel.findOne(query).populate({
@@ -81,6 +104,105 @@ const getById = async (
 		})
 
 		return files
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const getFavorites = async (
+	parent: any,
+	args: any,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		const query = {
+			'userAccess.userId': user?._id,
+			'favoriteBy.userId': user?._id,
+		}
+
+		const files = await fileModel.find(query).sort({ updatedAt: -1 })
+
+		return files
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const toogleFavorite = async (
+	parent: any,
+	{ input }: toogleFavoriteInput,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		const file = await fileModel.findOne({
+			_id: input.id,
+			'userAccess.userId': user?._id,
+		})
+
+		if (!file) {
+			throw new GraphQLError('File not found!', {
+				extensions: {
+					code: 'VALIDATION',
+				},
+			})
+		}
+
+		const userIndex = file.favoriteBy.findIndex(
+			(item) => item.userId.toString() == user?._id.toString()
+		)
+
+		if (userIndex > -1) {
+			await file.favoriteBy.splice(userIndex, 1)
+		} else {
+			await file.favoriteBy.push({
+				userId: user?._id,
+			})
+		}
+
+		await file.save()
+
+		return await fileModel.find({
+			'userAccess.userId': user?._id,
+			'favoriteBy.userId': user?._id,
+		})
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const toogleIsPublic = async (
+	parent: any,
+	{ input }: toogleIsPublicInput,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		const user = await checkAuth(req, userAuth)
+
+		const file = await fileModel.findOneAndUpdate(
+			{
+				_id: input.id,
+				userAccess: {
+					$elemMatch: {
+						userId: user._id,
+						role: 'OWNER',
+					},
+				},
+			},
+			{
+				isPublic: input.value,
+			},
+			{
+				new: true,
+			}
+		)
+
+		console.log(file)
+
+		return file?.isPublic ?? false
 	} catch (error) {
 		errorHandler(error)
 	}
@@ -190,13 +312,6 @@ const changeUserAccess = async (
 	}
 }
 
-const updateUserAccess = async () => {
-	try {
-	} catch (error) {
-		errorHandler(error)
-	}
-}
-
 const create = async (
 	parent: any,
 	args: any,
@@ -205,6 +320,23 @@ const create = async (
 	try {
 		// Check if the user is authenticated
 		const user = await checkAuth(req, userAuth)
+
+		const countFile = await fileModel.estimatedDocumentCount({
+			userAccess: {
+				$elemMatch: {
+					userId: user._id,
+					role: 'OWNER',
+				},
+			},
+		})
+
+		if (countFile >= 3) {
+			throw new GraphQLError('For demo purpose you can only have 3 files!', {
+				extensions: {
+					code: 'VALIDATION',
+				},
+			})
+		}
 
 		const thumbName = crypto.randomUUID()
 		const thumbnail = new Identicon(thumbName, 420)
@@ -276,6 +408,9 @@ export default {
 	getById,
 	addNewUserAccess,
 	changeUserAccess,
+	getFavorites,
+	toogleFavorite,
+	toogleIsPublic,
 	create,
 	update,
 	del,

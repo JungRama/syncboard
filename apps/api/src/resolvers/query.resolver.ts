@@ -9,5 +9,6 @@ export default {
 
 	// Files
 	getFiles: filesController.get,
+	getFavorites: filesController.getFavorites,
 	getFileById: filesController.getById,
 }

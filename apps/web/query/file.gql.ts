@@ -7,6 +7,7 @@ export const GET_FILES_QUERY = gql(/* GraphQL */ `
       name
       thumbnail
       updatedAt
+      isPublic
       userAccess {
         userId {
           _id
@@ -20,14 +21,24 @@ export const GET_FILES_QUERY = gql(/* GraphQL */ `
   }
 `);
 
+export const GET_FAVORITES_QUERY = gql(/* GraphQL */ `
+  query GetFavorites {
+    getFavorites {
+      name
+      id
+    }
+  }
+`);
+
 export const GET_FILE_BY_ID_QUERY = gql(/* GraphQL */ `
-  query GetFileById($id: String!) {
-    getFileById(id: $id) {
+  query GetFileById($id: String!, $isPublic: Boolean!) {
+    getFileById(id: $id, isPublic: $isPublic) {
       id
       name
       thumbnail
       updatedAt
       whiteboard
+      isPublic
       userAccess {
         userId {
           _id
@@ -81,6 +92,20 @@ export const CHANGE_USER_ACCESS_MUTATION = gql(/* GraphQL */ `
         photo
       }
       role
+    }
+  }
+`);
+
+export const TOOGLE_IS_PUBLIC_MUTATION = gql(/* GraphQL */ `
+  mutation ToogleIsPublic($input: ToogleIsPublicInput!) {
+    toogleIsPublic(input: $input)
+  }
+`);
+
+export const TOOGLE_FAVORITE_MUTATION = gql(/* GraphQL */ `
+  mutation ToogleFavorite($input: ToogleFavoriteInput!) {
+    toogleFavorite(input: $input) {
+      id
     }
   }
 `);

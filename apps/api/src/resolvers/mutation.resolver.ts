@@ -10,6 +10,8 @@ export default {
 	// Files
 	createFile: fileController.create,
 	updateFile: fileController.update,
+	toogleFavorite: fileController.toogleFavorite,
+	toogleIsPublic: fileController.toogleIsPublic,
 	addNewUserAccess: fileController.addNewUserAccess,
 	changeUserAccess: fileController.changeUserAccess,
 }

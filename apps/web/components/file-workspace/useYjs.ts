@@ -3,6 +3,7 @@ import {
   TLAnyShapeUtilConstructor,
   TLInstancePresence,
   TLRecord,
+  TLStore,
   TLStoreWithStatus,
   computed,
   createPresenceStateDerivation,
@@ -10,17 +11,14 @@ import {
   defaultShapeUtils,
   defaultUserPreferences,
   getUserPreferences,
-  setUserPreferences,
   react,
+  setUserPreferences,
   transact,
-  TLStore,
 } from '@tldraw/tldraw';
 import { useEffect, useMemo, useState } from 'react';
 import { YKeyValue } from 'y-utility/y-keyvalue';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
-import { record } from 'zod';
-// import { DEFAULT_STORE } from './default_store'
 
 export function useYjsStore({
   roomId = 'example',

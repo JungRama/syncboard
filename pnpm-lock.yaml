@@ -169,7 +169,7 @@ importers:
         version: 3.8.7(graphql@16.8.1)(react-dom@18.2.0)(react@18.2.0)
       '@graphql-codegen/cli':
         specifier: ^5.0.0
-        version: 5.0.0(@parcel/watcher@2.3.0)(@types/node@17.0.45)(graphql@16.8.1)(typescript@4.9.5)
+        version: 5.0.0(@parcel/watcher@2.3.0)(@types/node@17.0.45)(graphql@16.8.1)(typescript@5.2.2)
       '@graphql-codegen/client-preset':
         specifier: ^4.1.0
         version: 4.1.0(graphql@16.8.1)
@@ -203,6 +203,9 @@ importers:
       next:
         specifier: ^13.4.19
         version: 13.4.19(@babel/core@7.22.11)(react-dom@18.2.0)(react@18.2.0)(sass@1.69.5)
+      next13-progressbar:
+        specifier: ^1.1.1
+        version: 1.1.1(next@13.4.19)(react@18.2.0)
       nprogress:
         specifier: ^0.2.0
         version: 0.2.0
@@ -280,8 +283,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tsconfig
       typescript:
-        specifier: ^4.9.5
-        version: 4.9.5
+        specifier: ^5.2.2
+        version: 5.2.2
 
   packages/eslint-config-custom:
     devDependencies:
@@ -326,6 +329,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.0.2
         version: 1.0.2(@types/react@18.2.5)(react@17.0.2)
+      '@radix-ui/react-switch':
+        specifier: ^1.0.3
+        version: 1.0.3(@types/react-dom@18.2.3)(@types/react@18.2.5)(react-dom@18.2.0)(react@17.0.2)
       '@radix-ui/react-tabs':
         specifier: ^1.0.4
         version: 1.0.4(@types/react-dom@18.2.3)(@types/react@18.2.5)(react-dom@18.2.0)(react@17.0.2)
@@ -2293,7 +2299,7 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@graphql-codegen/cli@5.0.0(@parcel/watcher@2.3.0)(@types/node@17.0.45)(graphql@16.8.1)(typescript@4.9.5):
+  /@graphql-codegen/cli@5.0.0(@parcel/watcher@2.3.0)(@types/node@17.0.45)(graphql@16.8.1)(typescript@5.2.2):
     resolution: {integrity: sha512-A7J7+be/a6e+/ul2KI5sfJlpoqeqwX8EzktaKCeduyVKgOLA6W5t+NUGf6QumBDXU8PEOqXk3o3F+RAwCWOiqA==}
     hasBin: true
     peerDependencies:
@@ -2321,11 +2327,11 @@ packages:
       '@parcel/watcher': 2.3.0
       '@whatwg-node/fetch': 0.8.8
       chalk: 4.1.2
-      cosmiconfig: 8.3.6(typescript@4.9.5)
+      cosmiconfig: 8.3.6(typescript@5.2.2)
       debounce: 1.2.1
       detect-indent: 6.1.0
       graphql: 16.8.1
-      graphql-config: 5.0.3(@types/node@17.0.45)(graphql@16.8.1)(typescript@4.9.5)
+      graphql-config: 5.0.3(@types/node@17.0.45)(graphql@16.8.1)(typescript@5.2.2)
       inquirer: 8.2.5
       is-glob: 4.0.3
       jiti: 1.21.0
@@ -4664,6 +4670,33 @@ packages:
       react: 18.2.0
     dev: false
 
+  /@radix-ui/react-switch@1.0.3(@types/react-dom@18.2.3)(@types/react@18.2.5)(react-dom@18.2.0)(react@17.0.2):
+    resolution: {integrity: sha512-mxm87F88HyHztsI7N+ZUmEoARGkC22YVW5CaC+Byc+HRpuvCrOBPTAnXgf+tZ/7i0Sg/eOePGdMhUKhPaQEqow==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.23.2
+      '@radix-ui/primitive': 1.0.1
+      '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.2.5)(react@17.0.2)
+      '@radix-ui/react-context': 1.0.1(@types/react@18.2.5)(react@17.0.2)
+      '@radix-ui/react-primitive': 1.0.3(@types/react-dom@18.2.3)(@types/react@18.2.5)(react-dom@18.2.0)(react@17.0.2)
+      '@radix-ui/react-use-controllable-state': 1.0.1(@types/react@18.2.5)(react@17.0.2)
+      '@radix-ui/react-use-previous': 1.0.1(@types/react@18.2.5)(react@17.0.2)
+      '@radix-ui/react-use-size': 1.0.1(@types/react@18.2.5)(react@17.0.2)
+      '@types/react': 18.2.5
+      '@types/react-dom': 18.2.3
+      react: 17.0.2
+      react-dom: 18.2.0(react@17.0.2)
+    dev: false
+
   /@radix-ui/react-tabs@1.0.4(@types/react-dom@18.2.3)(@types/react@18.2.5)(react-dom@18.2.0)(react@17.0.2):
     resolution: {integrity: sha512-egZfYY/+wRNCflXNHx+dePvnz9FbmssDTJBtgRfDY7e8SE5oIo3Py2eCB1ckAbh1Q7cQ/6yJZThJ++sgbxibog==}
     peerDependencies:
@@ -5853,6 +5886,10 @@ packages:
   /@types/normalize-package-data@2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
     dev: true
+
+  /@types/nprogress@0.2.3:
+    resolution: {integrity: sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA==}
+    dev: false
 
   /@types/passport-local-mongoose@6.1.3:
     resolution: {integrity: sha512-Vfe7ozddaFVNeE7wU3R89SrmdrOchDg/zykcGeMkTbk+pIkQ03aD4UpBWK2O8oKNtTH0sB149cJMAEvzc/qcSQ==}
@@ -7383,6 +7420,24 @@ packages:
       parse-json: 5.2.0
       path-type: 4.0.0
       typescript: 4.9.5
+    dev: false
+    optional: true
+
+  /cosmiconfig@8.3.6(typescript@5.2.2):
+    resolution: {integrity: sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA==}
+    engines: {node: '>=14'}
+    requiresBuild: true
+    peerDependencies:
+      typescript: '>=4.9.5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
+      typescript: 5.2.2
     dev: false
 
   /cross-fetch@3.1.8:
@@ -9107,7 +9162,7 @@ packages:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
     dev: true
 
-  /graphql-config@5.0.3(@types/node@17.0.45)(graphql@16.8.1)(typescript@4.9.5):
+  /graphql-config@5.0.3(@types/node@17.0.45)(graphql@16.8.1)(typescript@5.2.2):
     resolution: {integrity: sha512-BNGZaoxIBkv9yy6Y7omvsaBUHOzfFcII3UN++tpH8MGOKFPFkCPZuwx09ggANMt8FgyWP1Od8SWPmrUEZca4NQ==}
     engines: {node: '>= 16.0.0'}
     peerDependencies:
@@ -9123,7 +9178,7 @@ packages:
       '@graphql-tools/merge': 9.0.1(graphql@16.8.1)
       '@graphql-tools/url-loader': 8.0.0(@types/node@17.0.45)(graphql@16.8.1)
       '@graphql-tools/utils': 10.0.11(graphql@16.8.1)
-      cosmiconfig: 8.3.6(typescript@4.9.5)
+      cosmiconfig: 8.3.6(typescript@5.2.2)
       graphql: 16.8.1
       jiti: 1.21.0
       minimatch: 4.2.3
@@ -10566,6 +10621,19 @@ packages:
   /negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
+    dev: false
+
+  /next13-progressbar@1.1.1(next@13.4.19)(react@18.2.0):
+    resolution: {integrity: sha512-8BTeft/1KLNkaJCKGXYK5SSkKmTBkg7MogH0z+huw+YP2deXKuZ/iqGamvWmhDS+dcCNs5Chdb8KhNTybn2zLA==}
+    peerDependencies:
+      next: '>= 13.0.0'
+      react: '>= 18.0.0'
+    dependencies:
+      '@types/nprogress': 0.2.3
+      next: 13.4.19(@babel/core@7.22.11)(react-dom@18.2.0)(react@18.2.0)(sass@1.69.5)
+      nprogress: 0.2.0
+      prop-types: 15.8.1
+      react: 18.2.0
     dev: false
 
   /next@13.4.19(@babel/core@7.22.11)(react-dom@18.2.0)(react@18.2.0)(sass@1.69.5):
@@ -12835,7 +12903,6 @@ packages:
     resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
     engines: {node: '>=14.17'}
     hasBin: true
-    dev: true
 
   /ua-parser-js@1.0.37:
     resolution: {integrity: sha512-bhTyI94tZofjo+Dn8SN6Zv8nBDvyXTymAdM3LDI/0IboIUwTu1rEhW7v2TfiVsoYWgkQ4kOVqnI8APUFbIQIFQ==}

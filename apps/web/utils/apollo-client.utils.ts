@@ -17,14 +17,14 @@ import { clearAllCredentials } from './user-credentials.utils';
 import { REFRESH_TOKEN_QUERY } from '@/query/auth.gql';
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: process.env.NEXT_PUBLIC_GRAPH_URL,
 });
 
 const errorLink = onError(
   ({ graphQLErrors, networkError, operation, forward }) => {
     if (operation.operationName === 'RefreshAccessToken') {
       return clearAllCredentials('/auth');
-    } else if (graphQLErrors)
+    } else if (graphQLErrors) {
       graphQLErrors.forEach((error) => {
         if (error.extensions.code === 'UNAUTHENTICATED') {
           const observable = new Observable((observer) => {
@@ -49,8 +49,11 @@ const errorLink = onError(
           });
 
           return observable;
+        } else {
+          return error;
         }
       });
+    }
 
     if (networkError) console.log(`[Network error]: ${networkError}`);
   },

@@ -2,33 +2,32 @@
 
 import {
   Editor,
-  Tldraw,
-  TLUiOverrides,
-  findMenuItem,
-  menuItem,
-  track,
-  useEditor,
   TLStore,
-  TLGeoShape,
-  createShapeId,
+  TLUiOverrides,
+  Tldraw,
+  createTLStore,
+  defaultShapeUtils,
+  menuItem,
 } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import { useRouter } from 'next/navigation';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useYjsStore } from './useYjs';
-import _ from 'underscore';
 import { mutateUpdateFile } from '@/services/file.service';
-import { formatResponse, snapshot } from './snapshot';
-import { useDispatch, useSelector } from 'react-redux';
 import { setEditor } from '@/store/file.store';
 import { RootState } from '@/store/index.store';
+import { useDispatch, useSelector } from 'react-redux';
+import _ from 'underscore';
+import { useYjsStore } from './useYjs';
 
-export default function Whiteboard({ roomId, defaultValue, isReadOnly }) {
+export default function Whiteboard({
+  roomId,
+  defaultValue,
+  isReadOnly,
+  useRealtime = true,
+}) {
   const router = useRouter();
   const [updateFile] = mutateUpdateFile();
 
-  // const [editorTL, setEditorTL] = useState<Editor | null>(null);
   const editorTL = useSelector((state: RootState) => state.file.editor);
 
   const dispatch = useDispatch();
@@ -50,92 +49,40 @@ export default function Whiteboard({ roomId, defaultValue, isReadOnly }) {
     },
   };
 
-  const store = useYjsStore({
-    roomId: roomId,
-    hostUrl: 'ws://localhost:1234',
-    defaultWhiteboard: defaultValue,
-    onUpdate: _.debounce((store: TLStore) => {
-      console.log(JSON.stringify(store.getSnapshot()));
-
-      // updateFile({
-      //   variables: {
-      //     input: {
-      //       id: roomId,
-      //       whiteboard: JSON.stringify(store.getSnapshot()),
-      //     },
-      //   },
-      // });
-    }, 3000),
-  });
-
-  const handleEvent = (name, data) => {
-    console.log(name, data);
-  };
-
-  // useEffect(() => {
-  //   formatResponse();
-  // }, []);
-
-  // const c = useMemo(() => formatResponse(editorTL), []);
-
-  // useEffect(() => {
-  //   console.log('c', editorTL);
-  // }, [editorTL]);
+  let store;
+  if (useRealtime) {
+    store = useYjsStore({
+      roomId: roomId,
+      hostUrl: process.env.NEXT_PUBLIC_WS_URL,
+      defaultWhiteboard: defaultValue,
+      onUpdate: _.debounce((store: TLStore) => {
+        // Do something
+      }, 3000),
+    });
+  }
 
   const handleMount = (editor: Editor) => {
-    // setEditorTL(editor);
     dispatch(setEditor(editor));
 
     if (editorTL) {
+      if (isReadOnly) {
+        editorTL.updateInstanceState({ isReadonly: true });
+      }
+
       editorTL.zoomToFit();
     }
   };
 
   return (
     <>
-      {/* <NameEditor></NameEditor> */}
       <Tldraw
-        // acceptedImageMimeTypes={['null']}
-        // acceptedVideoMimeTypes={['null']}
-        // maxAssetSize={100}
-        hideUi={isReadOnly}
         overrides={overideUI}
-        // autoFocus
         onMount={(editor) => {
           handleMount(editor);
         }}
-        // snapshot={c}
         store={store}
-        // onUiEvent={handleEvent}
-      />
+        persistenceKey={!store ? 'whiteboard' : undefined}
+      ></Tldraw>
     </>
   );
 }
-
-const NameEditor = track(() => {
-  const editor = useEditor();
-
-  const { color, name } = editor.user;
-
-  return (
-    <div style={{ pointerEvents: 'all', display: 'flex' }}>
-      <input
-        type="color"
-        value={color}
-        onChange={(e) => {
-          editor.user.updateUserPreferences({
-            color: e.currentTarget.value,
-          });
-        }}
-      />
-      <input
-        value={name}
-        onChange={(e) => {
-          editor.user.updateUserPreferences({
-            name: e.currentTarget.value,
-          });
-        }}
-      />
-    </div>
-  );
-});

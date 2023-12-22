@@ -79,7 +79,8 @@ var typeDefs = `#graphql
 
     # Files
     getFiles(search: String): [File]!
-    getFileById(id: String!): File!
+    getFileById(id: String!, isPublic: Boolean!): File!
+    getFavorites: [File]!
   }
 
   type Mutation {
@@ -92,6 +93,8 @@ var typeDefs = `#graphql
     createFile: File!
     addNewUserAccess(input: NewUserAccessInput!): [UserAccess]
     changeUserAccess(input: ChangeUserAccessInput!): [UserAccess]
+    toogleFavorite(input: ToogleFavoriteInput!): [File]
+    toogleIsPublic(input: ToogleIsPublicInput!): Boolean!
     updateFile(input: UpdateFileInput!): File!
     deleteFile(input: DeleteFileInput!): Boolean
   }
@@ -135,10 +138,20 @@ var typeDefs = `#graphql
     user_id: String!
     role: String!
   }
+
+  input ToogleFavoriteInput{
+    id: String!
+  }
+
+  input ToogleIsPublicInput {
+    id: String!
+    value: Boolean!
+  }
   
   type File {
     id: ID!
     name: String!
+    isPublic: Boolean
     thumbnail: String
     whiteboard: String
     userAccess: [UserAccess!]!
@@ -409,7 +422,7 @@ var login = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { i
   var _a;
   try {
     const user = yield user_default.findOne({ email }).select("+password +verified");
-    if (!password || !user || !(yield user.comparePasswords(password, (_a = user.password) != null ? _a : ""))) {
+    if (!password || password === "" || !user || !(yield user.comparePasswords(password, (_a = user.password) != null ? _a : ""))) {
       throw new import_graphql3.GraphQLError("Invalid email or password", {
         extensions: {
           code: "AUTHENTICATION_ERROR"
@@ -601,6 +614,10 @@ var fileSchema = new import_mongoose2.Schema(
       type: String,
       required: false
     },
+    isPublic: {
+      type: Boolean,
+      default: false
+    },
     whiteboard: {
       type: String,
       required: false
@@ -614,6 +631,15 @@ var fileSchema = new import_mongoose2.Schema(
         },
         role: {
           type: String,
+          required: true
+        }
+      }
+    ],
+    favoriteBy: [
+      {
+        userId: {
+          type: import_mongoose2.Schema.Types.ObjectId,
+          ref: "User",
           required: true
         }
       }
@@ -650,19 +676,100 @@ var get = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { sea
     error_controller_default(error);
   }
 });
-var getById = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { id }, { req, userAuth: userAuth2 }) {
+var getById = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { id, isPublic }, { req, userAuth: userAuth2 }) {
   try {
-    const user = yield check_auth_default(req, userAuth2);
-    const query = {
-      // 'userAccess.userId': user?._id,
-      _id: id
-    };
+    let user, query = null;
+    if (!isPublic) {
+      user = yield check_auth_default(req, userAuth2);
+      query = {
+        "userAccess.userId": user == null ? void 0 : user._id,
+        _id: id
+      };
+    } else {
+      query = {
+        _id: id,
+        isPublic: true
+      };
+    }
     const files = yield file_default.findOne(query).populate({
       path: "userAccess.userId",
       model: "User",
       select: "name photo email"
     });
     return files;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var getFavorites = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    const query = {
+      "userAccess.userId": user == null ? void 0 : user._id,
+      "favoriteBy.userId": user == null ? void 0 : user._id
+    };
+    const files = yield file_default.find(query).sort({ updatedAt: -1 });
+    return files;
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var toogleFavorite = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { input }, { req, userAuth: userAuth2 }) {
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    const file = yield file_default.findOne({
+      _id: input.id,
+      "userAccess.userId": user == null ? void 0 : user._id
+    });
+    if (!file) {
+      throw new import_graphql4.GraphQLError("File not found!", {
+        extensions: {
+          code: "VALIDATION"
+        }
+      });
+    }
+    const userIndex = file.favoriteBy.findIndex(
+      (item) => item.userId.toString() == (user == null ? void 0 : user._id.toString())
+    );
+    if (userIndex > -1) {
+      yield file.favoriteBy.splice(userIndex, 1);
+    } else {
+      yield file.favoriteBy.push({
+        userId: user == null ? void 0 : user._id
+      });
+    }
+    yield file.save();
+    return yield file_default.find({
+      "userAccess.userId": user == null ? void 0 : user._id,
+      "favoriteBy.userId": user == null ? void 0 : user._id
+    });
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
+var toogleIsPublic = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, { input }, { req, userAuth: userAuth2 }) {
+  var _a;
+  try {
+    const user = yield check_auth_default(req, userAuth2);
+    const file = yield file_default.findOneAndUpdate(
+      {
+        _id: input.id,
+        userAccess: {
+          $elemMatch: {
+            userId: user._id,
+            role: "OWNER"
+          }
+        }
+      },
+      {
+        isPublic: input.value
+      },
+      {
+        new: true
+      }
+    );
+    console.log(file);
+    return (_a = file == null ? void 0 : file.isPublic) != null ? _a : false;
   } catch (error) {
     error_controller_default(error);
   }
@@ -753,6 +860,21 @@ var changeUserAccess = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (
 var create = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (parent, args, { req, userAuth: userAuth2 }) {
   try {
     const user = yield check_auth_default(req, userAuth2);
+    const countFile = yield file_default.estimatedDocumentCount({
+      userAccess: {
+        $elemMatch: {
+          userId: user._id,
+          role: "OWNER"
+        }
+      }
+    });
+    if (countFile >= 3) {
+      throw new import_graphql4.GraphQLError("For demo purpose you can only have 3 files!", {
+        extensions: {
+          code: "VALIDATION"
+        }
+      });
+    }
     const thumbName = import_crypto.default.randomUUID();
     const thumbnail = new import_identicon.default(thumbName, 420);
     const dir = "public/storage/";
@@ -807,6 +929,9 @@ var files_controller_default = {
   getById,
   addNewUserAccess,
   changeUserAccess,
+  getFavorites,
+  toogleFavorite,
+  toogleIsPublic,
   create,
   update,
   del
@@ -821,6 +946,8 @@ var mutation_resolver_default = {
   // Files
   createFile: files_controller_default.create,
   updateFile: files_controller_default.update,
+  toogleFavorite: files_controller_default.toogleFavorite,
+  toogleIsPublic: files_controller_default.toogleIsPublic,
   addNewUserAccess: files_controller_default.addNewUserAccess,
   changeUserAccess: files_controller_default.changeUserAccess
 };
@@ -833,6 +960,7 @@ var query_resolver_default = {
   logoutUser: auth_controller_default.logout,
   // Files
   getFiles: files_controller_default.get,
+  getFavorites: files_controller_default.getFavorites,
   getFileById: files_controller_default.getById
 };
 

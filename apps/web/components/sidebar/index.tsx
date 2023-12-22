@@ -4,7 +4,6 @@ import { Separator } from '@ui/components/ui/separator';
 import { Loader, Search } from 'lucide-react';
 import Favorites from './favorites';
 import Profile from './profile';
-import RecentFile from './recent-file';
 import Image from 'next/image';
 import { useState } from 'react';
 import _ from 'underscore';

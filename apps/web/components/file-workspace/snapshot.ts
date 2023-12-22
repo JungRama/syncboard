@@ -151,68 +151,63 @@ export const snapshot = {
 
 const responsess = {
   shapes: [
-    {
-      type: 'ellipse',
-      description: 'Start',
-      id: '795b2064-7b3c-4e8d-b53e-13665d03a865',
-    },
+    { type: 'ellipse', description: 'Start', id: '1' },
     {
       type: 'rectangle',
-      description: 'Validate refresh token',
-      id: '57c0d49b-aecc-4b43-b9d9-704b00522df4',
+      description: 'Client sends a GraphQL query to the server',
+      id: '2',
     },
     {
       type: 'diamond',
-      description: 'Valid refresh token?',
-      id: '9e849c15-4df3-44bc-aae2-5748a49c1a50',
+      description: 'Does the server have a GraphQL schema?',
+      id: '3',
     },
     {
       type: 'rectangle',
-      description: 'Generate new access token',
-      id: 'f5b84ff2-402a-4bfb-9b9b-3cdc8a187e38',
+      description: 'Server validates and parses the GraphQL query',
+      id: '4',
+    },
+    {
+      type: 'diamond',
+      description: 'Is the query syntactically correct?',
+      id: '5',
     },
     {
       type: 'rectangle',
-      description: 'Send new access token',
-      id: '47d6b518-6907-45a5-b7f4-93f681d7508b',
+      description: 'Server executes the GraphQL query against the data',
+      id: '6',
     },
     {
-      type: 'ellipse',
-      description: 'End',
-      id: 'f8f951f9-443e-4aa1-a599-f557cd2689fd',
+      type: 'diamond',
+      description: 'Does the query require authorization?',
+      id: '7',
     },
+    {
+      type: 'rectangle',
+      description:
+        'Server checks if the client is authorized to execute the query',
+      id: '8',
+    },
+    {
+      type: 'rectangle',
+      description: 'Server returns the requested data to the client',
+      id: '9',
+    },
+    { type: 'ellipse', description: 'End', id: '10' },
   ],
   arrows: [
-    {
-      id: '8eac3323-72f5-4012-93dc-bcb8d5aecf53',
-      start: '795b2064-7b3c-4e8d-b53e-13665d03a865',
-      end: '57c0d49b-aecc-4b43-b9d9-704b00522df4',
-      description: 'Start the process by validating the refresh token',
-    },
-    {
-      id: 'f8f951f9-443e-4aa1-a599-f557cd2689fd',
-      start: '47d6b518-6907-45a5-b7f4-93f681d7508b',
-      end: 'f8f951f9-443e-4aa1-a599-f557cd2689fd',
-      description: 'Process completed, end the flow',
-    },
-    {
-      id: 'b720a7c7-8da6-4ad0-8a6c-6a475c9657e0',
-      start: '57c0d49b-aecc-4b43-b9d9-704b00522df4',
-      end: '9e849c15-4df3-44bc-aae2-5748a49c1a50',
-      description: 'If refresh token is valid, proceed, else stop',
-    },
-    {
-      id: '9574baa3-30aa-4c15-81e5-982cc32aaaa4',
-      start: '9e849c15-4df3-44bc-aae2-5748a49c1a50',
-      end: 'f5b84ff2-402a-4bfb-9b9b-3cdc8a187e38',
-      description: 'If valid, generate new access token',
-    },
-    {
-      id: '4e4a355a-5f50-4911-8dce-8f3a7adad5e5',
-      start: 'f5b84ff2-402a-4bfb-9b9b-3cdc8a187e38',
-      end: '47d6b518-6907-45a5-b7f4-93f681d7508b',
-      description: 'Send the newly generated access token',
-    },
+    { id: '1', start: '1', end: '2' },
+    { id: '2', start: '2', end: '3' },
+    { id: '3-true', start: '3', end: '4', description: 'Yes' },
+    { id: '3-false', start: '3', end: '10', description: 'No' },
+    { id: '4', start: '4', end: '5' },
+    { id: '5-true', start: '5', end: '6', description: 'Yes' },
+    { id: '5-false', start: '5', end: '10', description: 'No' },
+    { id: '6', start: '6', end: '7' },
+    { id: '7-true', start: '7', end: '8', description: 'Yes' },
+    { id: '7-false', start: '7', end: '9', description: 'No' },
+    { id: '8', start: '8', end: '9' },
+    { id: '9', start: '9', end: '10' },
   ],
 };
 const createShape = (idT, x, y, type, text, parent) => {

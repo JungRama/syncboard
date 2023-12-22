@@ -27,8 +27,10 @@ import { TLGeoShape } from '@tldraw/tldraw';
 import { formatResponse } from './snapshot';
 import { useEffect, useState } from 'react';
 import { getOpenAIKey, setOpenAIKey } from '@/utils/cookie-service.utils';
+import { useToast } from '@ui/components/ui/use-toast';
 
 export default function FileAIDialog() {
+  const { toast } = useToast();
   const editorTL = useSelector((state: RootState) => state.file.editor);
 
   const [dialog, setDialog] = useState(false);
@@ -39,8 +41,6 @@ export default function FileAIDialog() {
   const [prompt, setPrompt] = useState<string | null>(null);
 
   const saveApiKeyToCookie = (value) => {
-    console.log(value, 'oakey');
-
     setOpenAIKey(value);
   };
 
@@ -49,9 +49,18 @@ export default function FileAIDialog() {
   }, [getOpenAIKey()]);
 
   const buildWithAI = async () => {
-    setLoading(true);
+    if (!apiKey || !prompt) {
+      toast({
+        variant: 'destructive',
+        title:
+          'Please Enter ' +
+          (!apiKey ? 'API Key ' : '') +
+          (!prompt ? 'Prompt' : ''),
+      });
+      return;
+    }
 
-    if (!apiKey || !prompt) return;
+    setLoading(true);
 
     const openai = new OpenAI({
       apiKey: apiKey,
@@ -79,8 +88,6 @@ export default function FileAIDialog() {
 
     setDialog(false);
     setLoading(false);
-
-    console.log(completion.choices[0].message.content);
 
     if (editorTL) {
       editorTL?.createShapes<TLGeoShape>(
@@ -154,7 +161,7 @@ export default function FileAIDialog() {
           placeholder="Enter your prompt. example: Create a diagram that explains how HTTP/2 works."
         ></Textarea>
 
-        <Button onClick={buildWithAI}>
+        <Button disabled={loading} onClick={buildWithAI}>
           {loading && <Loader className="h-4 animate-spin"></Loader>}
           {loading ? 'Good things take time...' : 'Generate'}
         </Button>
