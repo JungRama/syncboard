@@ -28,7 +28,9 @@ export default function FileHeader() {
     const fileId = response.data?.createFile.id;
 
     if (fileId) {
-      router.push(`/files/${fileId}`);
+      setTimeout(() => {
+        router.push(`/files/${fileId}`);
+      }, 1000);
     }
   };
 
