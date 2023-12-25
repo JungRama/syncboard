@@ -39,3 +39,5 @@ export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '<redis_password>'
 export const REDIS_PORT = process.env.REDIS_PORT
 	? parseInt(process.env.REDIS_PORT)
 	: 19027
+
+export const RESEND_API_KEY = process.env.RESEND_API_KEY || '<resend_api_key>'

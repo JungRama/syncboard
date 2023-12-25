@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
+import { RESEND_API_KEY } from '~/env.config'
 
-const resend = new Resend('re_aSxE24wB_DdtSqrcBjThDscC6BWzW6JqF')
+const resend = new Resend(RESEND_API_KEY)
 
 const userRegisterEmail = async (name: string, email: string, link: string) => {
 	return await resend.emails.send({
@@ -15,7 +16,7 @@ const userRegisterEmail = async (name: string, email: string, link: string) => {
     <style>
       body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; }
       .container { width: 80%; margin: 0 auto; background: #fff; padding: 20px; }
-      .header { background-color: #004d99; color: #fff; padding: 10px; text-align: center; }
+      .header { background-color: #000000; color: #fff; padding: 10px; text-align: center; }
       .content { margin-top: 20px; }
       .footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #888; }
     </style>

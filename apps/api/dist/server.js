@@ -257,6 +257,7 @@ var JWT_REFRESH_TOKEN_EXPIRED_IN = process.env.JWT_REFRESH_TOKEN_EXPIRED_IN ? pa
 var REDIS_HOST = process.env.REDIS_HOST || "<redis_host>";
 var REDIS_PASSWORD = process.env.REDIS_PASSWORD || "<redis_password>";
 var REDIS_PORT = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 19027;
+var RESEND_API_KEY = process.env.RESEND_API_KEY || "<resend_api_key>";
 
 // src/core/redis.ts
 var redisClient = (0, import_redis.createClient)({
@@ -368,7 +369,7 @@ var verifyJwt = (token, Key) => {
 
 // src/services/mail.service.ts
 var import_resend = require("resend");
-var resend = new import_resend.Resend("re_aSxE24wB_DdtSqrcBjThDscC6BWzW6JqF");
+var resend = new import_resend.Resend(RESEND_API_KEY);
 var userRegisterEmail = (name, email, link) => __async(void 0, null, function* () {
   return yield resend.emails.send({
     from: "onboarding@resend.dev",
@@ -382,7 +383,7 @@ var userRegisterEmail = (name, email, link) => __async(void 0, null, function* (
     <style>
       body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; }
       .container { width: 80%; margin: 0 auto; background: #fff; padding: 20px; }
-      .header { background-color: #004d99; color: #fff; padding: 10px; text-align: center; }
+      .header { background-color: #000000; color: #fff; padding: 10px; text-align: center; }
       .content { margin-top: 20px; }
       .footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #888; }
     </style>
