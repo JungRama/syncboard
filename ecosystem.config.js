@@ -16,10 +16,16 @@ module.exports = {
 			},
 		},
 		{
-			name: 'ws-services-syncboard',
-			script: 'npm',
-			args: 'ws-server',
-			cwd: './apps/api',
+			name: 'y-websocket-server',
+			script: 'npx',
+			args: 'y-websocket',
+			cwd: './apps/api', // Your script's directory
+			watch: true, // Watch for file changes and restart
+			env: {
+				HOST: 'localhost',
+				PORT: 4002,
+				// Add other environment variables if needed
+			},
 		},
 	],
 }

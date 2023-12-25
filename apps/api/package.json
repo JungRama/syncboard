@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/server.js && ws",
     "dev": "tsup --watch --onSuccess \"node dist/server.js\" && ws",
     "ws": "node ./node_modules/y-websocket/bin/server.js",
     "ws-server": "HOST=localhost PORT=4002 npx y-websocket",
