@@ -83,7 +83,7 @@ export default function PageWrapper(): JSX.Element {
             {/* <div className="h-96 w-full rounded-xl bg-[url('https://images.unsplash.com/photo-1606868306217-dbf5046868d2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1981&q=80')] bg-cover bg-center bg-no-repeat object-cover sm:h-[480px]"></div> */}
             <video
               src="/video-landing.mp4"
-              className="rounded-lg border shadow-xl grayscale-0"
+              className="w-full rounded-lg border shadow-xl grayscale-0"
               id="video-landing"
             ></video>
 
