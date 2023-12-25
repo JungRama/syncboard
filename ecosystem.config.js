@@ -24,7 +24,6 @@ module.exports = {
 			env: {
 				HOST: 'localhost',
 				PORT: 4002,
-				// Add other environment variables if needed
 			},
 		},
 	],
