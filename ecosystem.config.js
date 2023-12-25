@@ -17,8 +17,8 @@ module.exports = {
 		},
 		{
 			name: 'ws-services-syncboard',
-			script: 'npx',
-			args: 'HOST=localhost PORT=4002 npx y-websocket',
+			script: 'npm',
+			args: 'ws-server',
 			cwd: './apps/api',
 		},
 	],
