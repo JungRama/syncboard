@@ -7,6 +7,7 @@
     "start": "node dist/server.js",
     "dev": "tsup --watch --onSuccess \"node dist/server.js\" && ws",
     "ws": "node ./node_modules/y-websocket/bin/server.js",
+    "ws-server": "HOST=localhost PORT=4002 npx y-websocket",
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
