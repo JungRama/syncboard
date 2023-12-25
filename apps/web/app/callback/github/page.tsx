@@ -1,15 +1,13 @@
 'use client';
 
+import { useOnMountUnsafe } from '@/hook/useOnMountUnsafe';
 import useAuthService from '@/services/auth.service';
 import { setUser } from '@/store/user.store';
 import { setAccessToken, setRefreshToken } from '@/utils/cookie-service.utils';
 import { useToast } from '@ui/components/ui/use-toast';
 import { Loader } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { useSearchParams } from 'next/navigation';
-import { useOnMountUnsafe } from '@/hook/useOnMountUnsafe';
 
 export default function GithubCallback(): JSX.Element {
   const dispatch = useDispatch();

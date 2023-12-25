@@ -1,20 +1,18 @@
-'use client';
-
 import '@ui/styles/globals.css';
 
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
-import ApolloClientProvider from '@/providers/apollo.provider';
-
-import { store } from '@/store/index.store';
-import { Provider as ReduxProvider } from 'react-redux';
-
-import { Toaster } from '@ui/components/ui/toaster';
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] });
 import './index.scss';
+import MainProvider from '@/providers/index.provider';
 
-import { Next13ProgressBar } from 'next13-progressbar';
+export const metadata: Metadata = {
+  title: 'Syncboard - Collaborative Whiteboard',
+  icons: '/icon/favicon.ico',
+  description:
+    'Collaborate with team in one simple board. Generate any diagram with the help of AI',
+};
 
 export default function RootLayout({
   children,
@@ -24,18 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={plusJakartaSans.className}>
-        <Next13ProgressBar
-          height="2px"
-          color="#000000"
-          options={{ showSpinner: true }}
-          showOnShallow
-        />
-        <ReduxProvider store={store}>
-          <ApolloClientProvider>
-            {children}
-            <Toaster></Toaster>
-          </ApolloClientProvider>
-        </ReduxProvider>
+        <MainProvider>{children}</MainProvider>
       </body>
     </html>
   );

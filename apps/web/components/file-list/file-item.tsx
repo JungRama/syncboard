@@ -67,7 +67,7 @@ export default function FileItem(props) {
         >
           <div className="relative flex aspect-video items-center justify-center rounded-md bg-[#f0f0f0]">
             <img
-              src={'http://localhost:4000/storage/' + thumbnail}
+              src={process.env.NEXT_PUBLIC_STORAGE_URL + thumbnail}
               className={cn(variant === 'LIST' ? 'h-16 rounded-lg' : 'h-24')}
               alt=""
             />

@@ -1,14 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "useUnknownInCatchVariables": false
-  }
+	"compilerOptions": {
+		"target": "es2016",
+		"module": "commonjs",
+		"paths": {
+			"~/*": ["./src/*"]
+		},
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"useUnknownInCatchVariables": false
+	}
 }

@@ -1,6 +1,12 @@
-import { LogIn, Play } from 'lucide-react';
+import { PageProps } from '@/.next/types/app/layout';
+import { LogIn, Pencil, Play } from 'lucide-react';
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  icons: '/icon/favicon.ico',
+};
 
 export default function Page(): JSX.Element {
   return (
@@ -30,6 +36,14 @@ export default function Page(): JSX.Element {
           >
             <div className="flex flex-col gap-x-0 gap-y-4 md:mt-0 md:flex-row md:items-center md:justify-end md:gap-x-7 md:gap-y-0 md:ps-7">
               <Link
+                className="flex items-center gap-x-2 font-medium text-gray-500 hover:text-orange-600  md:my-6 md:ps-6"
+                href="/draw"
+              >
+                <Pencil></Pencil>
+                Try Now
+              </Link>
+
+              <Link
                 className="flex items-center gap-x-2 font-medium text-gray-500 hover:text-orange-600  md:my-6 md:border-s md:border-gray-300 md:ps-6"
                 href="/auth"
               >
@@ -41,11 +55,21 @@ export default function Page(): JSX.Element {
         </nav>
       </header>
 
-      <div className="relative overflow-hidden">
+      <div className="relative mt-5  overflow-hidden">
         <div className="mx-auto max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-xl text-center">
+            <div className="flex justify-center">
+              <div className="mb-4 flex items-center gap-2 rounded-full border px-1 py-1">
+                <div className="rounded-full bg-orange-600 px-2 py-1 text-sm font-medium text-white">
+                  AI FEATURE
+                </div>
+                <p className="mr-2 text-sm">
+                  Generate any diagram with the help of AI
+                </p>
+              </div>
+            </div>
             <h1 className="block text-3xl font-bold text-gray-800 dark:text-white sm:text-4xl md:text-5xl">
-              Collaborate with other in one simple{' '}
+              Collaborate with team in one simple{' '}
               <span className="text-orange-600">board</span>
             </h1>
           </div>
