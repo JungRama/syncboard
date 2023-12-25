@@ -1,13 +1,16 @@
 import redisClient from '~/core/redis'
 import userModel, { IUser } from '~/models/user'
 
+import { GraphQLError } from 'graphql'
+import { signJwt, verifyJwt } from '~/core/jwt'
 import {
+	FRONT_URI,
 	JWT_ACCESS_TOKEN_EXPIRED_IN,
 	JWT_REFRESH_TOKEN_EXPIRED_IN,
 } from '~/env.config'
-import { GraphQLError } from 'graphql'
-import { signJwt, verifyJwt } from '~/core/jwt'
-import checkAuth from '~/middleware/check-auth'
+
+import mailService from './mail.service'
+import authService from './auth.service'
 
 interface SignupInput {
 	name: string
@@ -46,12 +49,35 @@ const signTokens = async (user: IUser) => {
 }
 
 const createUser = async (input: SignupInput) => {
-	const user = await userModel.create({
-		name: input.name,
-		email: input.email,
-		password: input.password,
-		passwordConfirm: input.passwordConfirm,
-	})
+	let user = await userModel.findOne({ email: input.email })
+
+	if (user && !user.verified) {
+		user = await userModel.findOneAndUpdate(
+			{
+				email: input.email,
+			},
+			{
+				name: input.name,
+				password: input.password,
+			}
+		)
+	} else {
+		user = await userModel.create({
+			name: input.name,
+			email: input.email,
+			password: input.password,
+			passwordConfirm: input.passwordConfirm,
+			verified: false,
+		})
+	}
+
+	await mailService.userRegisterEmail(
+		input.name,
+		input.email,
+		FRONT_URI + `/callback/verify?code=${user?.id}`
+	)
+
+	delete user?.id
 
 	return user
 }
@@ -68,6 +94,14 @@ const loginUser = async (input: SignInInput) => {
 		!(await user.comparePasswords(input.password, user.password ?? ''))
 	) {
 		throw new GraphQLError('Invalid email or password', {
+			extensions: {
+				code: 'AUTHENTICATION_ERROR',
+			},
+		})
+	}
+
+	if (!user.verified) {
+		throw new GraphQLError('Please verify your email address', {
 			extensions: {
 				code: 'AUTHENTICATION_ERROR',
 			},
@@ -132,6 +166,31 @@ const refreshToken = async (current_refresh_token: string) => {
 	}
 }
 
+const verifyAccount = async (id: string) => {
+	const user = await userModel.findOne({
+		id,
+		verified: false,
+	})
+
+	if (!user) {
+		throw new GraphQLError('User not found', {
+			extensions: {
+				code: 'NOT_FOUND',
+			},
+		})
+	}
+
+	user.verified = true
+	await user.save()
+
+	const { access_token, refresh_token } = await authService.signTokens(user)
+
+	return {
+		access_token,
+		refresh_token,
+	}
+}
+
 const logout = async (user: IUser) => {
 	if (user) {
 		await redisClient.del(user._id.toString())
@@ -145,5 +204,6 @@ export default {
 	createUser,
 	loginUser,
 	refreshToken,
+	verifyAccount,
 	logout,
 }

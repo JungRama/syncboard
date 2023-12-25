@@ -60,8 +60,15 @@ export default function SignInForm() {
 
     if (!errorRegister) {
       setSuccessMessage(
-        'Account created successfully! Login with your credentials.',
+        'Account created successfully! Please verify your email.',
       );
+
+      formHandler.reset({
+        name: '',
+        email: '',
+        password: '',
+        passwordConfirm: '',
+      });
     }
   };
 

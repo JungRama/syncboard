@@ -113,6 +113,23 @@ const refreshAccessToken = async (
 	}
 }
 
+const verifyAccount = async (
+	root: any,
+	{ input: { code } }: { input: { code: string } },
+	{ req }: { req: Request }
+) => {
+	try {
+		const verifyAccount = await authService.verifyAccount(code)
+
+		return {
+			access_token: verifyAccount?.access_token,
+			refresh_token: verifyAccount?.refresh_token,
+		}
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
 const logout = async (
 	root: any,
 	args: any,
@@ -150,6 +167,7 @@ export default {
 	signup,
 	login,
 	oAuth,
+	verifyAccount,
 	logout,
 	getMe,
 	refreshAccessToken,

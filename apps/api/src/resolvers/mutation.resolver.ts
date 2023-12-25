@@ -6,6 +6,7 @@ export default {
 	signupUser: authController.signup,
 	loginUser: authController.login,
 	oAuth: authController.oAuth,
+	verifyAccount: authController.verifyAccount,
 
 	// Files
 	createFile: fileController.create,

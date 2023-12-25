@@ -24,6 +24,15 @@ export const OAUTH_MUTATION = gql(/* GraphQL */ `
   }
 `);
 
+export const VERIFY_ACCOUNT_MUTATION = gql(/* GraphQL */ `
+  mutation VerifyAccount($input: verifyAccountInput!) {
+    verifyAccount(input: $input) {
+      access_token
+      refresh_token
+    }
+  }
+`);
+
 export const GET_ME_QUERY = gql(/* GraphQL */ `
   query GetMe {
     getMe {

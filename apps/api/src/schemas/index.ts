@@ -19,6 +19,7 @@ const typeDefs = `#graphql
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): Boolean
     oAuth(input: OAuthInput!): TokenResponse!
+    verifyAccount(input: verifyAccountInput!): TokenResponse!
 
     # Files
     createFile: File!
@@ -68,6 +69,10 @@ const typeDefs = `#graphql
     id: String!
     user_id: String!
     role: String!
+  }
+
+  input verifyAccountInput {
+    id: String
   }
 
   input ToogleFavoriteInput{

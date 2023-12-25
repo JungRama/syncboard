@@ -85,6 +85,7 @@ var typeDefs = `#graphql
     loginUser(input: LoginInput!): TokenResponse!
     signupUser(input: SignUpInput!): Boolean
     oAuth(input: OAuthInput!): TokenResponse!
+    verifyAccount(input: verifyAccountInput!): TokenResponse!
 
     # Files
     createFile: File!
@@ -134,6 +135,10 @@ var typeDefs = `#graphql
     id: String!
     user_id: String!
     role: String!
+  }
+
+  input verifyAccountInput {
+    id: String
   }
 
   input ToogleFavoriteInput{
@@ -361,6 +366,51 @@ var verifyJwt = (token, Key) => {
   return decoded;
 };
 
+// src/services/mail.service.ts
+var import_resend = require("resend");
+var resend = new import_resend.Resend("re_aSxE24wB_DdtSqrcBjThDscC6BWzW6JqF");
+var userRegisterEmail = (name, email, link) => __async(void 0, null, function* () {
+  return yield resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: email,
+    subject: "Welcome to Syncboard",
+    html: `
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Verify your email address</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; }
+      .container { width: 80%; margin: 0 auto; background: #fff; padding: 20px; }
+      .header { background-color: #004d99; color: #fff; padding: 10px; text-align: center; }
+      .content { margin-top: 20px; }
+      .footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #888; }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+      <div class="header">
+        <h1>Welcome to Syncboard!</h1>
+      </div>
+      <div class="content">
+        <p>Hi, ${name}</p>
+        <p>Thank you for register on syncboard, please verify your email by clicking link below</p>
+        <a href="${link}">${link}</a>
+        <p>Best regards,<br>
+        Jung Rama
+      </div>
+      <div class="footer">
+        \xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} Syncboard. All rights reserved.
+      </div>
+    </div>
+    </body>
+    </html>`
+  });
+});
+var mail_service_default = {
+  userRegisterEmail
+};
+
 // src/services/auth.service.ts
 var signTokens = (user) => __async(void 0, null, function* () {
   yield redis_default.set(user.id, JSON.stringify(user), {
@@ -375,12 +425,32 @@ var signTokens = (user) => __async(void 0, null, function* () {
   return { access_token, refresh_token };
 });
 var createUser = (input) => __async(void 0, null, function* () {
-  const user = yield user_default.create({
-    name: input.name,
-    email: input.email,
-    password: input.password,
-    passwordConfirm: input.passwordConfirm
-  });
+  let user = yield user_default.findOne({ email: input.email });
+  if (user && !user.verified) {
+    user = yield user_default.findOneAndUpdate(
+      {
+        email: input.email
+      },
+      {
+        name: input.name,
+        password: input.password
+      }
+    );
+  } else {
+    user = yield user_default.create({
+      name: input.name,
+      email: input.email,
+      password: input.password,
+      passwordConfirm: input.passwordConfirm,
+      verified: false
+    });
+  }
+  yield mail_service_default.userRegisterEmail(
+    input.name,
+    input.email,
+    FRONT_URI + `/callback/verify?code=${user == null ? void 0 : user.id}`
+  );
+  user == null ? true : delete user.id;
   return user;
 });
 var loginUser = (input) => __async(void 0, null, function* () {
@@ -388,6 +458,13 @@ var loginUser = (input) => __async(void 0, null, function* () {
   const user = yield user_default.findOne({ email: input.email }).select("+password +verified");
   if (!input.password || input.password === "" || !user || !(yield user.comparePasswords(input.password, (_a = user.password) != null ? _a : ""))) {
     throw new import_graphql3.GraphQLError("Invalid email or password", {
+      extensions: {
+        code: "AUTHENTICATION_ERROR"
+      }
+    });
+  }
+  if (!user.verified) {
+    throw new import_graphql3.GraphQLError("Please verify your email address", {
       extensions: {
         code: "AUTHENTICATION_ERROR"
       }
@@ -433,6 +510,26 @@ var refreshToken = (current_refresh_token) => __async(void 0, null, function* ()
     refresh_token
   };
 });
+var verifyAccount = (id) => __async(void 0, null, function* () {
+  const user = yield user_default.findOne({
+    id,
+    verified: false
+  });
+  if (!user) {
+    throw new import_graphql3.GraphQLError("User not found", {
+      extensions: {
+        code: "NOT_FOUND"
+      }
+    });
+  }
+  user.verified = true;
+  yield user.save();
+  const { access_token, refresh_token } = yield auth_service_default.signTokens(user);
+  return {
+    access_token,
+    refresh_token
+  };
+});
 var logout = (user) => __async(void 0, null, function* () {
   if (user) {
     yield redis_default.del(user._id.toString());
@@ -444,6 +541,7 @@ var auth_service_default = {
   createUser,
   loginUser,
   refreshToken,
+  verifyAccount,
   logout
 };
 
@@ -568,6 +666,17 @@ var refreshAccessToken = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function*
     error_controller_default(error);
   }
 });
+var verifyAccount2 = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (root, { input: { code } }, { req }) {
+  try {
+    const verifyAccount3 = yield auth_service_default.verifyAccount(code);
+    return {
+      access_token: verifyAccount3 == null ? void 0 : verifyAccount3.access_token,
+      refresh_token: verifyAccount3 == null ? void 0 : verifyAccount3.refresh_token
+    };
+  } catch (error) {
+    error_controller_default(error);
+  }
+});
 var logout2 = (_0, _1, _2) => __async(void 0, [_0, _1, _2], function* (root, args, { req, userAuth: userAuth2 }) {
   try {
     const user = yield check_auth_default(req, userAuth2);
@@ -592,6 +701,7 @@ var auth_controller_default = {
   signup,
   login,
   oAuth,
+  verifyAccount: verifyAccount2,
   logout: logout2,
   getMe,
   refreshAccessToken
@@ -941,6 +1051,7 @@ var mutation_resolver_default = {
   signupUser: auth_controller_default.signup,
   loginUser: auth_controller_default.login,
   oAuth: auth_controller_default.oAuth,
+  verifyAccount: auth_controller_default.verifyAccount,
   // Files
   createFile: files_controller_default.create,
   updateFile: files_controller_default.update,
