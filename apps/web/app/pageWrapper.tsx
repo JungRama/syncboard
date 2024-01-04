@@ -1,6 +1,6 @@
 'use client';
 
-import { LogIn, Pencil, Play } from 'lucide-react';
+import { Github, LogIn, Pencil, Play } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -34,6 +34,13 @@ export default function PageWrapper(): JSX.Element {
                 alt="logo"
               ></Image>
             </Link>
+
+            <a href="https://github.com/JungRama/syncboard" target="_blank">
+              <div className="ml-3 flex items-center gap-1 rounded-full bg-black p-2 px-4 text-white">
+                <Github className="h-4 w-4 text-white"></Github>
+                <span className="hidden md:block">Visit Repository</span>
+              </div>
+            </a>
           </div>
           <div
             id="navbar-collapse-with-animation"

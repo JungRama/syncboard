@@ -52,15 +52,10 @@ const createUser = async (input: SignupInput) => {
 	let user = await userModel.findOne({ email: input.email })
 
 	if (user && !user.verified) {
-		user = await userModel.findOneAndUpdate(
-			{
-				email: input.email,
-			},
-			{
-				name: input.name,
-				password: input.password,
-			}
-		)
+		user.name = input.name
+		user.password = input.password
+
+		user.save()
 	} else {
 		user = await userModel.create({
 			name: input.name,

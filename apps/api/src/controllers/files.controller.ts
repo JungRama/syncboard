@@ -1,16 +1,11 @@
 import { Request } from 'express'
-import _ from 'underscore'
 import checkAuth from '~/middleware/check-auth'
 import { UserAuthFn } from '~/middleware/user-auth'
 import fileModel from '~/models/file'
+import filesServices from '~/services/files.services'
 import errorHandler from './error.controller'
-import userModel from '~/models/user'
-import { GraphQLError } from 'graphql'
-import Identicon from 'identicon.js'
-import crypto from 'crypto'
-import fs from 'fs'
 
-interface FileInputUpdate {
+export interface FileInputUpdate {
 	input: {
 		id: string
 		name?: string
@@ -19,7 +14,7 @@ interface FileInputUpdate {
 	}
 }
 
-interface NewUserAccessInput {
+export interface NewUserAccessInput {
 	input: {
 		id: string
 		user_id: string
@@ -28,16 +23,16 @@ interface NewUserAccessInput {
 	}
 }
 
-interface toogleFavoriteInput {
+export interface toogleFavoriteInput {
 	input: {
 		id: string
 	}
 }
 
-interface toogleIsPublicInput {
+export interface toogleIsPublicInput {
 	input: {
 		id: string
-		value: string
+		value: boolean
 	}
 }
 
@@ -59,14 +54,7 @@ const get = async (
 			})
 		}
 
-		const files = await fileModel
-			.find(query)
-			.populate({
-				path: 'userAccess.userId',
-				model: 'User',
-				select: 'name photo email',
-			})
-			.sort({ updatedAt: -1 })
+		const files = await filesServices.find(query)
 
 		return files
 	} catch (error) {
@@ -97,17 +85,49 @@ const getById = async (
 			}
 		}
 
-		const files = await fileModel.findOne(query).populate({
-			path: 'userAccess.userId',
-			model: 'User',
-			select: 'name photo email',
-		})
-
-		return files
+		return filesServices.findOne(query)
 	} catch (error) {
 		errorHandler(error)
 	}
 }
+
+const create = async (
+	parent: any,
+	args: any,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		// Check if the user is authenticated
+		const user = await checkAuth(req, userAuth)
+
+		const file = await filesServices.create(user._id)
+
+		return file
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const update = async (
+	parent: any,
+	{ input }: FileInputUpdate,
+	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
+) => {
+	try {
+		// Check if the user is authenticated
+		await checkAuth(req, userAuth)
+
+		const file = await filesServices.update({
+			input,
+		})
+
+		return file
+	} catch (error) {
+		errorHandler(error)
+	}
+}
+
+const del = () => {}
 
 const getFavorites = async (
 	parent: any,
@@ -122,7 +142,7 @@ const getFavorites = async (
 			'favoriteBy.userId': user?._id,
 		}
 
-		const files = await fileModel.find(query).sort({ updatedAt: -1 })
+		const files = await filesServices.find(query)
 
 		return files
 	} catch (error) {
@@ -138,32 +158,7 @@ const toogleFavorite = async (
 	try {
 		const user = await checkAuth(req, userAuth)
 
-		const file = await fileModel.findOne({
-			_id: input.id,
-			'userAccess.userId': user?._id,
-		})
-
-		if (!file) {
-			throw new GraphQLError('File not found!', {
-				extensions: {
-					code: 'VALIDATION',
-				},
-			})
-		}
-
-		const userIndex = file.favoriteBy.findIndex(
-			(item) => item.userId.toString() == user?._id.toString()
-		)
-
-		if (userIndex > -1) {
-			await file.favoriteBy.splice(userIndex, 1)
-		} else {
-			await file.favoriteBy.push({
-				userId: user?._id,
-			})
-		}
-
-		await file.save()
+		filesServices.toogleFavorite(user._id, input.id)
 
 		return await fileModel.find({
 			'userAccess.userId': user?._id,
@@ -182,25 +177,11 @@ const toogleIsPublic = async (
 	try {
 		const user = await checkAuth(req, userAuth)
 
-		const file = await fileModel.findOneAndUpdate(
-			{
-				_id: input.id,
-				userAccess: {
-					$elemMatch: {
-						userId: user._id,
-						role: 'OWNER',
-					},
-				},
-			},
-			{
-				isPublic: input.value,
-			},
-			{
-				new: true,
-			}
+		const file = await filesServices.toogleIsPublic(
+			user._id,
+			input.id,
+			input.value
 		)
-
-		console.log(file)
 
 		return file?.isPublic ?? false
 	} catch (error) {
@@ -214,42 +195,11 @@ const addNewUserAccess = async (
 	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
 ) => {
 	try {
-		const user = await checkAuth(req, userAuth)
+		await checkAuth(req, userAuth)
 
-		const selectedUser = await userModel.findOne({
-			email: input.email,
+		const file = await filesServices.addNewUserAccess({
+			input,
 		})
-
-		if (!selectedUser) {
-			throw new GraphQLError('User not found!', {
-				extensions: {
-					code: 'VALIDATION',
-				},
-			})
-		}
-
-		const file = await fileModel
-			.findOneAndUpdate(
-				{
-					_id: input.id,
-				},
-				{
-					$push: {
-						userAccess: {
-							userId: selectedUser?._id,
-							role: input.role,
-						},
-					},
-				},
-				{
-					new: true,
-				}
-			)
-			.populate({
-				path: 'userAccess.userId',
-				model: 'User',
-				select: 'name photo email',
-			})
 
 		return file?.userAccess
 	} catch (error) {
@@ -263,47 +213,10 @@ const changeUserAccess = async (
 	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
 ) => {
 	try {
-		const user = await checkAuth(req, userAuth)
+		await checkAuth(req, userAuth)
 
-		let file = null
-
-		if (input.role === 'REMOVE') {
-			file = await fileModel.findOneAndUpdate(
-				{
-					_id: input.id,
-				},
-				{
-					$pull: {
-						userAccess: { userId: input.user_id },
-					},
-				},
-				{
-					new: true,
-				}
-			)
-
-			console.log(input.role, input.user_id)
-		} else {
-			file = await fileModel.findOneAndUpdate(
-				{
-					_id: input.id,
-					'userAccess.userId': input.user_id,
-				},
-				{
-					$set: {
-						'userAccess.$.role': input.role,
-					},
-				},
-				{
-					new: true,
-				}
-			)
-		}
-
-		await file?.populate({
-			path: 'userAccess.userId',
-			model: 'User',
-			select: 'name photo email',
+		const file = await filesServices.changeUserAccess({
+			input,
 		})
 
 		return file?.userAccess
@@ -311,97 +224,6 @@ const changeUserAccess = async (
 		errorHandler(error)
 	}
 }
-
-const create = async (
-	parent: any,
-	args: any,
-	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
-) => {
-	try {
-		// Check if the user is authenticated
-		const user = await checkAuth(req, userAuth)
-
-		const countFile = await fileModel.countDocuments({
-			userAccess: {
-				$elemMatch: {
-					userId: user._id,
-					role: 'OWNER',
-				},
-			},
-		})
-
-		if (countFile >= 3) {
-			throw new GraphQLError('For demo purpose you can only have 3 files!', {
-				extensions: {
-					code: 'VALIDATION',
-				},
-			})
-		}
-
-		const thumbName = crypto.randomUUID()
-		const thumbnail = new Identicon(thumbName, 420)
-		const dir = 'public/storage/'
-
-		if (!fs.existsSync(dir)) {
-			fs.mkdirSync(dir)
-		}
-
-		fs.writeFile(
-			dir + thumbName + '.png',
-			thumbnail.toString(),
-			'base64',
-			function (err) {
-				console.log(err)
-			}
-		)
-
-		const file = await fileModel.create({
-			name: 'Untitled File',
-			thumbnail: thumbName + '.png',
-			whiteboard: null,
-			updatedAt: new Date(),
-			userAccess: [
-				{
-					userId: user?._id,
-					role: 'OWNER',
-				},
-			],
-		})
-
-		return file
-	} catch (error) {
-		errorHandler(error)
-	}
-}
-
-const update = async (
-	parent: any,
-	args: FileInputUpdate,
-	{ req, userAuth }: { req: Request; userAuth: UserAuthFn }
-) => {
-	try {
-		// Check if the user is authenticated
-		await checkAuth(req, userAuth)
-
-		const getInput = _.omit(args.input, _.isNull)
-
-		const file = await fileModel.findByIdAndUpdate(
-			args.input.id,
-			{
-				...getInput,
-			},
-			{
-				new: true,
-			}
-		)
-
-		return file
-	} catch (error) {
-		errorHandler(error)
-	}
-}
-
-const del = () => {}
 
 export default {
 	get,

@@ -57,8 +57,7 @@ const userSchema = new Schema<IUser>(
 		},
 		verified: {
 			type: Boolean,
-			default: true,
-			select: false,
+			default: false,
 		},
 	},
 	{ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }

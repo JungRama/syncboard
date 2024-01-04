@@ -255,8 +255,6 @@ export function useYjsStore({
         // Create the initial store records
         // Sync the store records to the yjs doc
         yDoc.transact(() => {
-          console.log(store.allRecords());
-
           for (const record of store.allRecords()) {
             yStore.set(record.id, record);
           }

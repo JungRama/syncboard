@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: pnpm-setup
+        uses: pnpm/action-setup@v2
+
       - name: Deploy Using ssh
         uses: appleboy/ssh-action@master
         with:
@@ -30,9 +33,9 @@ jobs:
           nvm install 18.0.0
           nvm use 18.0.0
 
-      # - name: Install Depedencies
-      #   run: |
-      #     pnpm install
+      - name: Install Depedencies
+        run: |
+          pnpm install
 
       - name: Build
         run: |

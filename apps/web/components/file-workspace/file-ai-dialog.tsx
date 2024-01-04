@@ -24,7 +24,7 @@ import OpenAI from 'openai';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/index.store';
 import { TLGeoShape } from '@tldraw/tldraw';
-import { formatResponse } from './snapshot';
+import { formatShapes } from './useFormatShapes';
 import { useEffect, useState } from 'react';
 import { getOpenAIKey, setOpenAIKey } from '@/utils/cookie-service.utils';
 import { useToast } from '@ui/components/ui/use-toast';
@@ -91,7 +91,7 @@ export default function FileAIDialog() {
 
     if (editorTL) {
       editorTL?.createShapes<TLGeoShape>(
-        formatResponse(
+        formatShapes(
           editorTL,
           JSON.parse(completion.choices[0].message.content ?? '{}'),
         ),
