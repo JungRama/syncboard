@@ -28,9 +28,9 @@ Run the following command:
 
 1. Clone the repo into a public GitHub repository (or fork https://github.com/JungRama/syncboard/fork).
 
-```sh
-git clone https://github.com/JungRama/syncboard.git
-```
+   ```sh
+   git clone https://github.com/JungRama/syncboard.git
+   ```
 
 2. Go to the project folder
 
