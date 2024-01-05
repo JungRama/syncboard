@@ -1,5 +1,5 @@
 # Syncboard - AI Powered Real-time Whiteboard
-
+![thumbnail](https://github.com/JungRama/syncboard/assets/31382668/299feae8-e088-47ef-b8bf-f3a0360a7dfe)
 Syncboard is a user-friendly board editor that lets you draw and work together with your team in real-time. It also has a handy AI feature that helps you make diagrams and flowcharts effortlessly.
 
 ## What's inside?
