@@ -49,55 +49,63 @@ export default function FileAIDialog() {
   }, [getOpenAIKey()]);
 
   const buildWithAI = async () => {
-    if (!apiKey || !prompt) {
+    try {
+      if (!apiKey || !prompt) {
+        toast({
+          variant: 'destructive',
+          title:
+            'Please Enter ' +
+            (!apiKey ? 'API Key ' : '') +
+            (!prompt ? 'Prompt' : ''),
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      const openai = new OpenAI({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'create a a step-by-step process explaining things.{ shapes: [{type: string, // value can be ellipse, rectangle, diamond // ellipse (start/end) used to represents the start or end of a process in a flowchart // diamond (decision): Represents a decision point, required a yes/no or true/false in arrow and need to have 2 output // rectangle (process): Depicts a process step or action in the flowchart description: string, // describe step 10 - 50 char id: string, // generate random uuid }], arrows: [{ id: string, // generate random uuid start: string, // id of shape to start end: string, // id of shape to end, description: string, // describe about this arrow. this is optional, usually used when connected with diamond shape. }] } you need to provide with those JSON format',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model: 'gpt-3.5-turbo-1106',
+        n: 1,
+        response_format: {
+          type: 'json_object',
+        },
+      });
+
+      setDialog(false);
+      setLoading(false);
+
+      if (editorTL) {
+        editorTL?.createShapes<TLGeoShape>(
+          formatShapes(
+            editorTL,
+            JSON.parse(completion.choices[0].message.content ?? '{}'),
+          ),
+        );
+
+        editorTL?.zoomToFit();
+      }
+    } catch (error) {
+      setLoading(false);
       toast({
         variant: 'destructive',
-        title:
-          'Please Enter ' +
-          (!apiKey ? 'API Key ' : '') +
-          (!prompt ? 'Prompt' : ''),
+        title: error.message,
       });
-      return;
-    }
-
-    setLoading(true);
-
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content:
-            'create a a step-by-step process explaining things.{ shapes: [{type: string, // value can be ellipse, rectangle, diamond // ellipse (start/end) used to represents the start or end of a process in a flowchart // diamond (decision): Represents a decision point, required a yes/no or true/false in arrow and need to have 2 output // rectangle (process): Depicts a process step or action in the flowchart description: string, // describe step 10 - 50 char id: string, // generate random uuid }], arrows: [{ id: string, // generate random uuid start: string, // id of shape to start end: string, // id of shape to end, description: string, // describe about this arrow. this is optional, usually used when connected with diamond shape. }] } you need to provide with those JSON format',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      model: 'gpt-3.5-turbo-1106',
-      n: 1,
-      response_format: {
-        type: 'json_object',
-      },
-    });
-
-    setDialog(false);
-    setLoading(false);
-
-    if (editorTL) {
-      editorTL?.createShapes<TLGeoShape>(
-        formatShapes(
-          editorTL,
-          JSON.parse(completion.choices[0].message.content ?? '{}'),
-        ),
-      );
-
-      editorTL?.zoomToFit();
     }
   };
 
