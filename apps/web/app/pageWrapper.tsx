@@ -23,7 +23,7 @@ export default function PageWrapper(): JSX.Element {
         >
           <div className="flex items-center justify-between">
             <Link
-              className="flex-none text-xl font-semibold dark:text-white"
+              className="hidden flex-none text-xl font-semibold dark:text-white md:block"
               href="/"
               aria-label="Brand"
             >
@@ -46,7 +46,7 @@ export default function PageWrapper(): JSX.Element {
             id="navbar-collapse-with-animation"
             className="duration-300block overflow-hidden transition-all"
           >
-            <div className="flex flex-col gap-x-0 gap-y-4 md:mt-0 md:flex-row md:items-center md:justify-end md:gap-x-7 md:gap-y-0 md:ps-7">
+            <div className="flex flex-row gap-x-2 gap-y-4 md:mt-0 md:flex-row md:items-center md:justify-end md:gap-x-7 md:gap-y-0 md:ps-7">
               <Link
                 className="flex items-center gap-x-2 font-medium text-gray-500 hover:text-orange-600  md:my-6 md:ps-6"
                 href="/draw"
